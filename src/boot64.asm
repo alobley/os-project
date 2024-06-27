@@ -182,21 +182,39 @@ ALIGN 4
 .Pointer:
     dw $ - GDT - 1                    ; 16-bit Size (Limit) of GDT.
     dd GDT                            ; 32-bit Base Address of GDT. (CPU will zero extend to 64-bit)
+
+idt:
+.desc:
+    dw 4095
+    dq 0x1000
  
  
 [BITS 64]      
 LongMode:
-    mov ax, DATA_SEG
+    xor rax, rax
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ss, ax
 
+    cli
+
     ; Set the stack to some random empty address, it will be immediately replaced by the kernel.
-	mov rsp, stack_end
-    mov rbp, stack_begin
-    
+	mov rsp, 0x1000
+    lock xadd [next_sp], rsp
+
+    lidt [idt.desc]
+
+    mov rsi, [0x6000]
+    add rsi, 0x00F0
+    mov rdi, rsi
+    lodsd
+    or eax, 0x100
+    stosd
+
+    sti
+
     call kernelspace
 
 
@@ -244,6 +262,8 @@ CheckCPU:
 .NoLongMode:
     stc
     ret
+
+next_sp: dq 0x00020000
  
 ; Pad out file.
 times 510 - ($-$$) db 0

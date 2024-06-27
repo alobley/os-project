@@ -1,28 +1,28 @@
-ENTRY(_start)
+OUTPUT_FORMAT("binary)
+ENTRY(kernel_main)
 SECTIONS
 {
-    . = 0x7E00;
-
-    .text BLOCK(4K) : ALIGN(4K)
+    localApicAddr = 0x00006000;
+    
+    .text :
     {
-        *(.text.prologue)
         *(.text)
     }
 
-    .rodata BLOCK(4K) : ALIGN(4K)
+    .rodata :
     {
         *(.rodata)
     }
 
-    .data BLOCK(4K) : ALIGN(4K)
+    .data :
     {
         *(.data)
     }
 
-    .bss BLOCK(4K) : ALIGN(4K)
+    .bss :
     {
+        __bss_start = .;
         *(.bss)
+        __bss_end = .;
     }
-
-    end = .;
 }

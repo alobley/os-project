@@ -23,6 +23,8 @@ typedef uint64 size_t;
 typedef float f32;
 typedef double f64;
 
+typedef uint64 uintptr_t;
+
 // Booleans
 #define bool unsigned char
 #define true 1

@@ -15,12 +15,13 @@ uint32 pci_read_config_dword(uint8 bus, uint8 device, uint8 function, uint8 offs
 
 // Find a PCI device by vendor ID and device ID
 int pci_find_device(uint16 vendorID, uint16 deviceID, pci_device_t* dev){
+    uint8 bus, device, function;
     // Iterate through each bus
-    for (uint8 bus = 0; bus < 256; bus++) {
+    for (bus = 0; bus < 256; bus++) {
         // Iterate through each device at each bus
-        for (uint8 device = 0; device < 32; device++) {
+        for (device = 0; device < 32; device++) {
             // Iterate through every function of each device
-            for (uint8 function = 0; function < 8; function++) {
+            for (function = 0; function < 8; function++) {
                 // Read the vendor ID from the PCI device
                 uint16 vid = pci_read_config_dword(bus, device, function, 0);
 
