@@ -1,7 +1,7 @@
 #include "exceptions.h"
 #include "../vga.h"
 
-static const char *exceptionDescs[20] = {
+static const char exceptionDescs[20][28] = {
     [0] = "Divide By 0",
     [1] = "Debug",
     [2] = "Nonmaskable Interrupt",
@@ -23,14 +23,26 @@ static const char *exceptionDescs[20] = {
     [19] = "SIMD Exception"
 };
 
+uint32 strlen(const char* string){
+    uint32 len = 0;
+    while(*(string + len) != '\0'){
+        len++;
+    }
+    return len;
+}
+
 void ExceptionDump(Registers regs){
     ClearVGAMem();
+
     const char *desc = "Unknown";
     if(regs.intNum < 20){
         desc = exceptionDescs[regs.intNum];
     }
 
     WriteStr(desc, 0, 0);
+    uint32 nextCharPos = strlen(desc);
+
+    WriteStr(" Interrupt", nextCharPos, 0);
 
     for(;;);
 }

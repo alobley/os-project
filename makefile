@@ -2,7 +2,7 @@ ASM=nasm
 CCOM=gcc
 ARCH=x86_64
 
-CFLAGS=-O2 -nostdlib -ffreestanding -fno-stack-protector -no-pie -T linker.ld
+CFLAGS=-O2 -nostdlib -ffreestanding -fno-stack-protector -no-pie -T linker.ld -std=gnu99
 
 EMARGS=-m 5G -smp 2 -vga std -device virtio-gpu-pci -serial stdio -drive file=build/main.img,format=raw,id=hd0,if=none -device virtio-blk-pci,drive=hd0
 

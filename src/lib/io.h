@@ -1,6 +1,8 @@
 #ifndef IO_H
 #define IO_H
 
+#include "types.h"
+
 // Get a byte from a specified port
 unsigned char inb(unsigned short port);
 

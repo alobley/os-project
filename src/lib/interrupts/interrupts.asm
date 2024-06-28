@@ -1,3 +1,4 @@
+section .text.interrupts
 [GLOBAL default_exception_handler]
 [GLOBAL default_interrupt_handler]
 [GLOBAL exception_handlers]
@@ -9,10 +10,11 @@
 [EXTERN ExceptionDump]
 
 BITS 64
-
+global default_exception_handler
 default_exception_handler:
     jmp $
 
+global default_interrupt_handler
 default_interrupt_handler:
     iret
 
@@ -20,12 +22,14 @@ default_interrupt_handler:
 exception%1_handler:
     cli
     push byte %1
+    push byte %1
     jmp exception_body
 %endmacro
 
 %macro make_error_exception_handler 1
 exception%1_handler:
     cli
+    push byte %1
     push byte %1
     jmp exception_body
 %endmacro
@@ -51,6 +55,8 @@ make_exception_handler 16
 make_error_exception_handler 17
 make_exception_handler 18
 make_exception_handler 19
+
+global exception_handlers
 
 exception_handlers:
     dq exception0_handler
@@ -87,6 +93,7 @@ exception_body:
 
     jmp $
 
+global pit_interrupt
 pit_interrupt:
     push rax
     push rdi
@@ -104,5 +111,6 @@ pit_interrupt:
     pop rax
     iret
 
+global spurious_interrupt
 spurious_interrupt:
     iret

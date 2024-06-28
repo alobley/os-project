@@ -26,10 +26,18 @@ void kernel_main(void){
 
     IntrInit();
 
+
     // Set rax to 0xDEADBEEF to conform that the kernel loaded
     asm volatile ("mov $0xDEADBEEF, %rax");
 
     ClearVGAMem();
+
+    // Test interrupt
+    asm volatile ("int $0x3");
+
+    delay(1);
+
+    WriteStr("Hello, World!", 0, 0);
 
     // Initialize the kernel's memory
     init_memory();
