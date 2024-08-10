@@ -32,8 +32,6 @@ int pci_find_device(uint16 vendorID, uint16 deviceID, pci_device_t* dev){
 
                     // The program simply does not do this part. What in the actual heck??? It doesn't return and the code underneath this does not get executed.
                     if (did == deviceID) {
-                        asm ("mov $0xFEEDBEEF, %rax");
-                        for(;;);
                         // If the device ID was found, assign its attributes to the PCI device struct passed to the function
                         dev->bus = bus;
                         dev->device = device;

@@ -4,7 +4,7 @@ ORG 0x7C00
 BITS 16
 
 LOAD_ADDRESS: equ 0x7E00
-TOTAL_SECTORS: equ 10000
+TOTAL_SECTORS: equ 1024
  
 ; Main entry point where BIOS leaves us.
  
@@ -201,8 +201,8 @@ LongMode:
     cli
 
     ; Set the stack to some random empty address, it will be immediately replaced by the kernel.
-	mov rsp, 0x1000
-    lock xadd [next_sp], rsp
+	mov rsp, stack_end
+    mov rbp, stack_begin
 
     lidt [idt.desc]
 

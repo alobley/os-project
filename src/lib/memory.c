@@ -1,9 +1,9 @@
 #include "memory.h"
 #include "types.h"
 
-// Define the kernel memory heap. It's the last gigabyte of RAM in a 5GB system. At some point, I will probably implement dynamic allocation.
-#define KERNEL_FREE_HEAP_BEGIN 4000000000ULL
-#define KERNEL_FREE_HEAP_END 5000000000ULL
+// Define the kernel memory heap. It's the last gigabyte of RAM in a 4GB system. At some point, I will probably implement dynamic allocation.
+#define KERNEL_FREE_HEAP_BEGIN 3000000000ULL
+#define KERNEL_FREE_HEAP_END 4000000000ULL
 
 // Defines a block of memory that the kernel has either allocated or can use
 typedef struct mem_block{

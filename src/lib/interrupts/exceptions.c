@@ -1,35 +1,28 @@
 #include "exceptions.h"
 #include "../vga.h"
+#include "../asm.h"
 
 static const char exceptionDescs[20][28] = {
-    [0] = "Divide By 0",
-    [1] = "Debug",
-    [2] = "Nonmaskable Interrupt",
-    [3] = "Breakpoint",
-    [4] = "Overflow",
-    [5] = "Bound Range Exception",
-    [6] = "Invalid Opcode",
-    [7] = "Device Not Available",
-    [8] = "Double Fault",
-    [9] = "Coprocessor Segment Overrun",
-    [10] = "Invalid TSS",
-    [11] = "Segment Not Present",
-    [12] = "Stack Segment Fault",
-    [13] = "General Protection Fault",
-    [14] = "Page Fault",
-    [16] = "Floating Point Error",
-    [17] = "Alignment Check",
-    [18] = "Machine Check",
-    [19] = "SIMD Exception"
+    [0] = "Divide By 0\n",
+    [1] = "Debug\n",
+    [2] = "Nonmaskable Interrupt\n",
+    [3] = "Breakpoint\n",
+    [4] = "Overflow\n",
+    [5] = "Bound Range Exception\n",
+    [6] = "Invalid Opcode\n",
+    [7] = "Device Not Available\n",
+    [8] = "Double Fault\n",
+    [9] = "Coprocessor Segment Overrun\n",
+    [10] = "Invalid TSS\n",
+    [11] = "Segment Not Present\n",
+    [12] = "Stack Segment Fault\n",
+    [13] = "General Protection Fault\n",
+    [14] = "Page Fault\n",
+    [16] = "Floating Point Error\n",
+    [17] = "Alignment Check\n",
+    [18] = "Machine Check\n",
+    [19] = "SIMD Exception\n"
 };
-
-uint32 strlen(const char* string){
-    uint32 len = 0;
-    while(*(string + len) != '\0'){
-        len++;
-    }
-    return len;
-}
 
 void ExceptionDump(Registers regs){
     ClearVGAMem();
@@ -39,10 +32,8 @@ void ExceptionDump(Registers regs){
         desc = exceptionDescs[regs.intNum];
     }
 
-    WriteStr(desc, 0, 0);
+    kprintf(desc);
     uint32 nextCharPos = strlen(desc);
-
-    WriteStr(" Interrupt", nextCharPos, 0);
 
     for(;;);
 }

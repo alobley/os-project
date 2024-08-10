@@ -24,6 +24,13 @@ void set_pit_count(uint32 count){
     outb(PIT_CHANNEL0, (count & 0xFF00) >> 8);
 }
 
+void delay2(size_t timeWait){
+    for(size_t i = 0; i < timeWait; i++){
+        // Force the compiler not to optimize this function
+        volatile uint8 j = 0;
+    }
+}
+
 // Delays execution for the specified number of milliseconds
 void delay(uint32 ms){
     uint32 startTicks = pitTicks;

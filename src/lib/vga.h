@@ -11,6 +11,10 @@
 
 void ClearVGAMem();
 
-void WriteStr(const char* str, int x, int y);
+uint32 strlen(const char* string);
+
+void kprintf(const char *str, ...);
+
+void WriteStr(const char* str);
 
 #endif

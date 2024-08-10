@@ -8,47 +8,54 @@
 #include "lib/vga.h"
 #include "lib/asm.h"
 
-// For some reason, even when it's not called at all, the interrupt code simply existing in memory causes a double fault. When I don't compile the interrupt stuff
-// It works without any problems whatsoever.
-#include "lib/interrupts/interrupts.h"
+// For some reason, the mere existence of interrupts in RAM causes very strange errors. I can not fathom why on any level.
+// It was also working before, but for some reason, even though absolutely nothing changed, it's not working anymore.
+//#include "lib/interrupts/interrupts.h"
 
 extern char __bss_start, __bss_end;
 
 
-// The main function of the kernel, although the entry point is in kernel_start.s
+// RIP and PC just freeze and do not continue after a certain point. Why? Hell if I know. It must be a QEMU bug or something.
 void kernel_main(void){
+    // Initialize the kernel's memory - must be done first
+    init_memory();
+
     // Set the bss section to 0
     uint8* ptr = &__bss_start;
-    while(ptr != &__bss_end){
+    while((uint64)ptr != (uint64)&__bss_end){
         *ptr = 0;
         ptr++;
     }
 
-    IntrInit();
-
-
-    // Set rax to 0xDEADBEEF to conform that the kernel loaded
-    asm volatile ("mov $0xDEADBEEF, %rax");
-
     ClearVGAMem();
 
-    // Test interrupt
-    asm volatile ("int $0x3");
+    kprintf("Booting OS...\n");
 
-    delay(1);
+    kprintf("Keyboard test. Please press any key.\n");
 
-    WriteStr("Hello, World!", 0, 0);
+    // PS/2 keyboard drivers are working!
+    volatile uint8 key = 0x00;
 
-    // Initialize the kernel's memory
-    init_memory();
+    // Hey compiler, this code exists by the way
+    while(key == NONE || key == 250){
+        key = (volatile uint8)GetKey();
+    }
+
+    kprintf("Keys are Working!\n");
+
+    // Busy wait instead of using the PIT
+    delay2(ROUGHLY_ONE_MILLISECOND);
+
+    kprintf("Timing is functional!\n");
 
     // Find the GPU's MMIO address
     uint64 gpuaddr = find_virtio_device(GPU_VENDORID, GPU_DEVICEID);
     if(gpuaddr == DRIVER_FAILURE){
+        kprintf("No vGPU found! Are you running on real hardware?\n");
         PANIC_KERNEL_ERROR();
     }
 
-    WriteStr("GPU Found!", 0, 0);
+    kprintf("GPU Drivers Functional!\n");
 
     // Set the pointer to the virtio registers struct to the address the GPU's MMIO is located.
     virtio_regs* GPU = set_virtio_device(gpuaddr);

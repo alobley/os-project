@@ -5,7 +5,7 @@ section .text.interrupts
 [GLOBAL pit_interrupt]
 [GLOBAL spurious_interrupt]
 
-[EXTERN pitTicks]
+EXTERN pitTicks
 [EXTERN localApicAddr]
 [EXTERN ExceptionDump]
 

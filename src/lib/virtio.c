@@ -5,10 +5,9 @@
 
 // There was a critical error in kernel drivers
 void PANIC_KERNEL_ERROR(){
-    char errmsg[] = "CRITICAL ERROR - KERNEL STOPPING";
     // Set rax to the driver error code and halt execution
     asm("mov $0xDDDDDDDDDDDDDDDD, %rax");
-    WriteStr(errmsg, 0, 0);
+    kprintf("CRITICAL ERROR - KERNEL STOPPING\n");
     while(true);
 }
 

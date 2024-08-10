@@ -23,3 +23,19 @@ unsigned int inl(unsigned short port){
 void outl(unsigned short port, unsigned int data){
     asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
 }
+
+void mmiowriteb(void *p, unsigned char data){
+    *(volatile unsigned char *)(p) = data;
+}
+
+unsigned char mmioreadb(void *p){
+    return *(volatile unsigned char *)(p);
+}
+
+void mmiowritel(void *p, unsigned int data){
+    *(volatile unsigned int *)(p) = data;
+}
+
+unsigned int mmioreadl(void *p){
+    return *(volatile unsigned int *)(p);
+}

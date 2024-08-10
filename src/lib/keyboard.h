@@ -102,4 +102,6 @@ enum Keys {
 // Get a keyboard scancode from a PS/2 keyboard
 uint8 GetKey();
 
+void WaitForKeyPress();
+
 #endif

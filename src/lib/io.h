@@ -15,20 +15,12 @@ unsigned int inl(unsigned short port);
 // Send a dword to a specified port
 void outl(unsigned short port, unsigned int data);
 
-static inline void mmiowriteb(void *p, unsigned char data){
-    *(volatile unsigned char *)(p) = data;
-}
+void mmiowriteb(void *p, unsigned char data);
 
-static inline unsigned char mmioreadb(void *p){
-    return *(volatile unsigned char *)(p);
-}
+unsigned char mmioreadb(void *p);
 
-static inline void mmiowritel(void *p, unsigned int data){
-    *(volatile unsigned int *)(p) = data;
-}
+void mmiowritel(void *p, unsigned int data);
 
-static inline unsigned int mmioreadl(void *p){
-    return *(volatile unsigned int *)(p);
-}
+unsigned int mmioreadl(void *p);
 
 #endif
