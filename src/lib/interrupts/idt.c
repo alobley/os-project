@@ -1,20 +1,6 @@
 #include "idt.h"
 #include "../memory.h"
-
-typedef struct IdtDesc{
-    uint16 limit;
-    uint64 base;
-} __attribute__((packed)) IdtDesc;
-
-
-typedef struct IdtEntry {
-    uint16 offset0;
-    uint16 selector;
-    uint16 type;
-    uint16 offset1;
-    uint32 offset2;
-    uint32 reserved;
-} __attribute__((packed)) IdtEntry;
+#include "../asm.h"
 
 typedef void (*Handler)();
 
@@ -28,11 +14,11 @@ void IdtInit(){
     }
 
     for(uint32 i = 20; i < 32; ++i){
-        IdtSetHandler(i, INTERRUPT_GATE, default_exception_handler);
+        IdtSetHandler(i, INTERRUPT_GATE, &default_exception_handler);
     }
 
     for(uint32 i = 32; i < 256; ++i){
-        IdtSetHandler(i, TRAP_GATE, default_interrupt_handler);
+        IdtSetHandler(i, TRAP_GATE, &default_interrupt_handler);
     }
 
     IdtDesc idtDesc = {
@@ -41,6 +27,8 @@ void IdtInit(){
     };
 
     asm volatile("lidt %0" : : "m" (idtDesc) : "memory");
+
+    return;
 }
 
 static void SetIdtEntry(uint8 index, uint64 base, uint16 selector, uint16 type){

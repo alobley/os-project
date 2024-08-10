@@ -5,7 +5,6 @@ section .text.interrupts
 [GLOBAL pit_interrupt]
 [GLOBAL spurious_interrupt]
 
-EXTERN pitTicks
 [EXTERN localApicAddr]
 [EXTERN ExceptionDump]
 
@@ -93,6 +92,7 @@ exception_body:
 
     jmp $
 
+extern pitTicks
 global pit_interrupt
 pit_interrupt:
     push rax
@@ -101,11 +101,6 @@ pit_interrupt:
     mov eax, dword [pitTicks]
     inc eax
     mov dword [pitTicks], eax
-
-    mov rdi, [localApicAddr]
-    add rdi, 0
-    xor eax, eax
-    stosd
 
     pop rdi
     pop rax

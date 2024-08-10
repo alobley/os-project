@@ -10,9 +10,9 @@
 // Initialize the PIT at a specific frequency
 void InitializePIT();
 
-void delay2(unsigned long long timeWait);
-
 // Delay for a specified amount of ms (or ticks if the PIT is not set to milliseconds)
 void delay(unsigned int ms);
+
+void timer_callback();
 
 #endif

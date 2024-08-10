@@ -1,5 +1,5 @@
 #include "exceptions.h"
-#include "../vga.h"
+#include "../drivers/vga.h"
 #include "../asm.h"
 
 static const char exceptionDescs[20][28] = {
@@ -25,7 +25,7 @@ static const char exceptionDescs[20][28] = {
 };
 
 void ExceptionDump(Registers regs){
-    ClearVGAMem();
+    ClearTerminal();
 
     const char *desc = "Unknown";
     if(regs.intNum < 20){
