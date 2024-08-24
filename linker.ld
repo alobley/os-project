@@ -1,30 +1,33 @@
-OUTPUT_FORMAT("binary")
+ENTRY(_start)
+
 SECTIONS
-{
-    localApicAddr = 0x00006000;
-    
-    .text 0x0000000000007E00:
+{   
+    . = 2M;
+
+    .text BLOCK(4k) : ALIGN(4K)
     {
-        *(.text.prologue)
+        *(.multiboot)
 
         *(.text)
 
         *(.text.interrupts)
     }
 
-    .rodata :
+    .rodata BLOCK(4k) : ALIGN(4K)
     {
         *(.rodata)
     }
 
-    .data :
+    .data BLOCK(4k) : ALIGN(4K)
     {
         *(.data)
     }
 
-    .bss :
+    .bss BLOCK(4k) : ALIGN(4K)
     {
+        *(COMMON)
         *(.bss)
-        __stack_start = .;
     }
+
+    __kernel_end = .;
 }

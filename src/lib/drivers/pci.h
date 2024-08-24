@@ -1,13 +1,8 @@
 #ifndef PCI_H
 #define PCI_H
 
-// The PCI ports to read to and write from to configure devices
-#define PCI_CONFIG_ADDRESS 0xCF8
-#define PCI_CONFIG_DATA 0xCFC
-
 #include "../types.h"
 
-// PCI device structure
 typedef struct{
     uint8 bus;
     uint8 device;
@@ -16,10 +11,12 @@ typedef struct{
     uint16 device_id;
 } pci_device_t;
 
-// Function prototypes
-int pci_find_device(uint16 vendor_id, uint16 device_id, pci_device_t* dev);
-uint32 pci_read_config_dword(uint8 bus, uint8 device, uint8 function, uint8 offset);
+int FindPCIDevice(uint16 vendorID, uint16 deviceID, pci_device_t* dev);
 
-// More functions can be addded later
+uint32 ReadPCIConfig(uint8 bus, uint8 device, uint8 function, uint8 offset);
+
+uint32 CreatePCIAddress(uint8 bus, uint8 device, uint8 function, uint8 offset);
+
+void WritePCIConfig(uint8 bus, uint8 device, uint8 function, uint8 offset, uint32 value);
 
 #endif

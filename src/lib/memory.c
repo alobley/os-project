@@ -1,118 +1,124 @@
 #include "memory.h"
-#include "types.h"
+#include "drivers/console.h"
 #include "asm.h"
+#include "io.h"
 
-// Define the kernel memory heap. It's 1GB - 2GB marks. At some point, I will probably implement dynamic allocation.
-#define KERNEL_FREE_HEAP_BEGIN 1000000000ULL
-#define KERNEL_FREE_HEAP_END 2000000000ULL
+extern uint32 __kernel_end;
 
-// Defines a block of memory that the kernel has either allocated or can use
-typedef struct mem_block{
-    size_t size;
-    struct mem_block* next;
-} __attribute__((packed)) mem_block_t;
+uint32 KERNEL_FREE_HEAP_BEGIN;
+uint32 KERNEL_FREE_HEAP_END;
 
-// Set the free region of memory for allocating
-static mem_block_t* free_list = (mem_block_t* )KERNEL_FREE_HEAP_BEGIN;
 
-// Initialize the kernel's memory heap
-void init_memory(){
-    free_list->size = KERNEL_FREE_HEAP_END - KERNEL_FREE_HEAP_BEGIN;
-    free_list->next = NULL;
+typedef struct memory_block {
+    size_t size;                 // Size of the memory block
+    struct memory_block* next;   // Pointer to the next free block of memory
+    bool free;                   // Block free or bot
+} memory_block_t;
+
+#define MEMORY_BLOCK_SIZE (sizeof(memory_block_t))
+
+memory_block_t* kernel_heap;
+
+uint32 kernel_heap_end;
+
+uint32 memsize;
+
+uint32 GetMemSize(){
+    return memsize;
 }
 
-// Emergency function that clears the kernel's memory heap
-void PANIC_FREE_HEAP(){
-    free_list = (mem_block_t* )KERNEL_FREE_HEAP_BEGIN;
-    free_list->size = KERNEL_FREE_HEAP_END - KERNEL_FREE_HEAP_BEGIN;
-    free_list->next = NULL;
+uint32 MemDetect(){
+    uint32 total;
+    uint8 lowmem, midlow, midhigh, highmem;
+
+    outb(0x70, 0x30);
+    lowmem = inb(0x71);
+    midlow = inb(0x71);
+    midhigh = inb(0x71);
+    highmem = inb(0x71);
+
+    total = lowmem | (midlow << 8) | (midhigh << 16) | (highmem << 24);
+
+    kprintf("%llu\n", total);
+
+    return total;
 }
 
-// Allows the kernel to allocate a specific amount of memory in its 1G heap
+void InitializeMemory(){
+    // Set to 1 billion bytes for now (GRUB is being dumb and stupid)
+    kernel_heap_end = 1000000000;
+
+    KERNEL_FREE_HEAP_BEGIN = __kernel_end;
+    kernel_heap = (memory_block_t *)KERNEL_FREE_HEAP_BEGIN;
+
+    kernel_heap->size = KERNEL_FREE_HEAP_END - KERNEL_FREE_HEAP_BEGIN - MEMORY_BLOCK_SIZE;
+    kernel_heap->next = NULL;
+    kernel_heap->free = true;
+
+    memsize = kernel_heap_end;
+}
+
 void* kmalloc(size_t size){
-    mem_block_t* current = free_list;
-    mem_block_t* previous = NULL;
+    memory_block_t* current = kernel_heap;
+    memory_block_t* prev = NULL;
 
-    // Align to the nearest multiple of 8
-    size = (size + 7) & ~7;
-
-    size_t totalSize = size + sizeof(mem_block_t);
-    while(current){
-        // Check if we've reached the end of free space. If so, return null.
-        if((uint64)current + current->size >= KERNEL_FREE_HEAP_END){
-            return NULL;
-        }
-
-        // If we have not run out of space, allocate an area of the kernel's memory heap, to as much as is needed.
-        if(current->size >= totalSize){
-            if(current->size > totalSize + sizeof(mem_block_t)){
-                // Split the block
-                mem_block_t* new_block = (mem_block_t*)((uint64)current + totalSize);
-                new_block->size = current->size - totalSize;
+    while(current != NULL){
+        if(current->free && current->size >= size){
+            // Suitable free block found
+            if(current->size >= size + MEMORY_BLOCK_SIZE + 1){
+                // Split the block if it's big enough
+                memory_block_t* new_block = (memory_block_t* )((uint8* )current + MEMORY_BLOCK_SIZE + size);
+                new_block->size = current->size - size - MEMORY_BLOCK_SIZE;
                 new_block->next = current->next;
-                current->size = size;
-                current->next = NULL;
-                
-                if(previous){
-                    // If we created a new memory block
-                    previous->next = new_block;
-                }else{
-                    free_list = new_block;
-                }
-            }else{
-                if(previous){
-                    // If we created a new memory block
-                    previous->next = current->next;
-                }else{
-                    free_list = current->next;
-                }
-            }
-            return (void*)((uint64)current + sizeof(mem_block_t));
-        }
+                new_block->free = true;
 
-        // The current block of memory was insufficient, allocate a new block
-        previous = current;
+                current->size = size;
+                current->next = new_block;
+            }
+            current->free = false;
+            return (void *)((uint8 *)current + MEMORY_BLOCK_SIZE);
+        }
+        prev = current;
         current = current->next;
     }
 
-    // No suitable block found
+    // No suitable block found, expand heap
+    if(kernel_heap_end + size + MEMORY_BLOCK_SIZE < KERNEL_FREE_HEAP_END){
+        memory_block_t* new_block = (memory_block_t* )kernel_heap_end;
+        new_block->size = size;
+        new_block->next = NULL;
+        new_block->free = false;
+
+        if(prev != NULL){
+            prev->next = new_block;
+        }else{
+            kernel_heap = new_block;
+        }
+
+        kernel_heap_end += size + MEMORY_BLOCK_SIZE;
+        return (void* )((uint8* )new_block + MEMORY_BLOCK_SIZE);
+    }
+
+    // Out of memory
     return NULL;
 }
 
-
-// Allows the kernel to free heap space
 void kfree(void* ptr){
-    // If the pointer is null, nothing needs to be freed.
-    if(!ptr) return;
-
-    // Get the block of memory the allocated memory is located in
-    mem_block_t* block = (mem_block_t*)((uint64)ptr - sizeof(mem_block_t));
-
-    // Prepare the free memory for expansion
-    mem_block_t* current = free_list;
-    mem_block_t* previous = NULL;
-
-    // Coalesce free blocks of memory to prevent fragmentation and clear them
-    while(current && (uint64)current < (uint64)block){
-        previous = current;
-        current = current->next;
+    if(ptr == NULL){
+        // Data does not exist
+        return;
     }
 
-    if(previous){
-        if((uint64)previous + previous->size == (uint64)block){
-            previous->size += block->size;
-            block = previous;
-        }else{
-            previous->next = block;
+    memory_block_t* block = (memory_block_t* )((uint8* )ptr - MEMORY_BLOCK_SIZE);
+    block->free = true;
+
+    // Coalesce adjacent free blocks to prevent memory fragmentation
+    memory_block_t* current = kernel_heap;
+    while(current != NULL){
+        if(current->free && current->next != NULL && current->next->free){
+            current->size += current->next->size + MEMORY_BLOCK_SIZE;
+            current->next = current->next->next;
         }
-    }else{
-        free_list = block;
-    }
-
-    if(current && (uint64)block + block->size == (uint64)current){
-        block->size += current->size;
-        block->next = current->next;
-    }else{
-        block->next = current;
+        current = current->next;
     }
 }

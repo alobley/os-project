@@ -3,16 +3,20 @@
 
 #define IDT_BASE 0x00001000
 
+#include "types.h"
+
 // Emergencies only - clear the kernel's heap entirely
 void PANIC_FREE_HEAP();
 
 // Initialize the kernel's memory heap
-void init_memory();
+void InitializeMemory();
 
 // Kernel malloc
-void* kmalloc(unsigned long long size);
+void* kmalloc(size_t size);
 
 // Kernel free
 void kfree(void *ptr);
+
+uint32 GetMemSize();
 
 #endif

@@ -1,7 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-// Null pointer
+#define PACKED __attribute__((packed))
+#define ALIGNED(num) __attribute__aligned((num))
+
+// NULL pointer
 #define NULL ((void *)0)
 
 // Unsigned types
@@ -16,28 +19,24 @@ typedef short int16;
 typedef int int32;
 typedef long long int64;
 
-// size_t, for when you don't want to use uint64.
-typedef uint64 size_t;
+// Size_t, which is for when I want to feel special and quirky and decide not to use uint64.
+typedef uint32 size_t;
 
 // Floats
 typedef float f32;
 typedef double f64;
 
-typedef uint64 uintptr_t;
+typedef uint32 uintptr_t;
 
 // Booleans
-typedef uint8 bool;
+#define bool unsigned char
 #define true 1
 #define false 0
 
-// Limits
-#define UINT_MAX 0xFFFFFFFF
-#define ULONG_MAX 0xFFFFFFFFFFFFFFFF
+// Max values
+#define UINT_MAX -1U
+#define ULONG_MAX -1ULL
 
-#define INT_MAX 2147483647
-#define LONG_MAX 9223372036854775807
-
-#define INT_MIN (-INT_MAX - 1)
-#define LONG_MIN (-LONG_MAX - 1)
+#define PACKED __attribute__((packed))
 
 #endif

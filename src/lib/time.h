@@ -1,18 +1,15 @@
 #ifndef TIME_H
 #define TIME_H
 
-#define PIT_FREQUENCY 1193182
+#include "types.h"
 
-#define ROUGHLY_THREE_SECONDS 1000000000
-#define ROUGHLY_ONE_SECOND 333333333
-#define ROUGHLY_ONE_MILLISECOND 333333
+// Milliseconds
+#define TIMER_TPS 1000
 
-// Initialize the PIT at a specific frequency
+uint64 GetTicks();
 void InitializePIT();
-
-// Delay for a specified amount of ms (or ticks if the PIT is not set to milliseconds)
-void delay(unsigned int ms);
-
-void timer_callback();
+void Sleep(uint64 ms);
+void AddTimerCallback(void callback(), uint32 callbackNum, uint32 interval);
+void RemoveTimerCallback(uint32 callbackNum);
 
 #endif

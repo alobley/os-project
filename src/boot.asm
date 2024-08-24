@@ -2,7 +2,7 @@
  
 ORG 0x7C00
 BITS 16
-CPU x64
+CPU 386
 
 LOAD_ADDRESS: equ 0x7E00
 TOTAL_SECTORS: equ 1024
@@ -81,7 +81,7 @@ SwitchToPMode:
 flush:
     lidt [IDT]
     lgdt [gdtp]
-    mov ax, gdt_data_segment - gdt_start
+    mov ax, (gdt_data_segment - gdt_start)
     mov ds, ax
     mov es, ax
     mov fs, ax
@@ -94,7 +94,14 @@ flush:
 
 BITS 32
 ProtectedMode:
+    ; I give up on paging. I have spent 18 hours trying to figure it out. 32 bits were always better anyway.
     call kernelspace
+
+die:
+    cli
+    hlt
+    jmp die
+
 
 
 ALIGN 16

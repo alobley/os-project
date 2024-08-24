@@ -1,52 +1,39 @@
 #include "idt.h"
-#include "../memory.h"
-#include "../asm.h"
+#include "../drivers/console.h"
 
-typedef void (*Handler)();
+struct IDTEntry{
+    uint16 offset_low;
+    uint16 selector;
+    uint8 __ignored;
+    uint8 type;
+    uint16 offset_high;
+} PACKED;
 
-extern void default_exception_handler();
-extern void default_interrupt_handler();
-extern void (*exception_handlers[20])();
+struct IDTPointer {
+    uint16 limit;
+    uintptr_t base;
+} PACKED;
 
-void IdtInit(){
-    for(uint32 i = 0; i < 20; ++i){
-        IdtSetHandler(i, INTERRUPT_GATE, exception_handlers[i]);
-    }
+static struct {
+    struct IDTEntry entries[256];
+    struct IDTPointer pointer;
+} idt;
 
-    for(uint32 i = 20; i < 32; ++i){
-        IdtSetHandler(i, INTERRUPT_GATE, &default_exception_handler);
-    }
+extern void LoadIDT();
 
-    for(uint32 i = 32; i < 256; ++i){
-        IdtSetHandler(i, TRAP_GATE, &default_interrupt_handler);
-    }
-
-    IdtDesc idtDesc = {
-        .limit = 256 * sizeof(IdtEntry) - 1,
-        .base = IDT_BASE
+void SetIDT(uint8 index, void(*base)(struct Registers*), uint16 selector, uint8 flags){
+    idt.entries[index] = (struct IDTEntry){
+        .offset_low = ((uintptr_t) base) & 0xFFFF,
+        .offset_high = (((uintptr_t) base) >> 16) & 0xFFFF,
+        .selector = selector,
+        .type = flags,
+        .__ignored = 0
     };
-
-    asm volatile("lidt %0" : : "m" (idtDesc) : "memory");
-
-    return;
 }
 
-static void SetIdtEntry(uint8 index, uint64 base, uint16 selector, uint16 type){
-    IdtEntry *entry = (IdtEntry *)IDT_BASE + index;
-
-    entry->offset0 = (uint16)base;
-    entry->selector = selector;
-    entry->type = type;
-    entry->offset1 = (uint16)(base >> 16);
-    entry->offset2 = (uint32)(base >> 32);
-    entry->reserved = 0;
-}
-
-void IdtSetHandler(uint8 index, uint16 type, void (*handler)()){
-    if(handler){
-        uint16 selector = 0x8;
-        SetIdtEntry(index, (uint64)handler, selector, type);
-    }else{
-        SetIdtEntry(index, 0, 0, 0);
-    }
+void InitIDT(){
+    idt.pointer.limit = sizeof(idt.entries) - 1;
+    idt.pointer.base = (uintptr_t) &idt.entries[0];
+    memset(&idt.entries[0], 0, sizeof(idt.entries));
+    LoadIDT((uintptr_t) &idt.pointer);
 }

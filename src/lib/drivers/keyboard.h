@@ -104,4 +104,6 @@ uint8 GetKey();
 
 uint8 WaitForKeyPress();
 
+void InitializeKeyboard();
+
 #endif

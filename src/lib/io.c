@@ -12,6 +12,16 @@ void outb(unsigned short port, unsigned char data){
     asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
 }
 
+unsigned short inw(unsigned short port){
+    unsigned short data;
+    asm volatile("in %1, %0" : "=a" (data) : "Nd" (port));
+    return data;
+}
+
+void outw(unsigned short port, unsigned short data){
+    asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
+}
+
 // Get a 32-bit piece of data from a port
 unsigned int inl(unsigned short port){
     unsigned int data;

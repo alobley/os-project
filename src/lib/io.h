@@ -9,6 +9,10 @@ unsigned char inb(unsigned short port);
 // Send a byte to a specified port
 void outb(unsigned short port, unsigned char data);
 
+unsigned short inw(unsigned short port);
+
+void outw(unsigned short port, unsigned short data);
+
 // Get a dword from a specified port
 unsigned int inl(unsigned short port);
 

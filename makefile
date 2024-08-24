@@ -1,49 +1,49 @@
 ASM=nasm
 CCOM=gcc
-ARCH=x86_64
+ARCH=i386
 
-CFLAGS=-O2 -nostdlib -ffreestanding -fno-stack-protector -no-pie -T linker.ld -std=gnu99
+CFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib --std=gnu99
 
-EMARGS=-m 32G -smp 16 -vga virtio -device virtio-gpu-pci -serial stdio -drive file=build/main.img,format=raw,id=hd0,if=none -device virtio-blk-pci,drive=hd0
-
+EMARGS=-m 4G -smp 1 -device vmware-svga,vgamem_mb=256 -serial stdio -drive file=build/main.iso,media=cdrom,if=ide -drive file=bin/harddisk.vdi,format=raw,if=ide -boot d
 SRC_DIR=src
 BUILD_DIR=build
 LIB_DIR=src/lib
 INT_DIR=src/lib/interrupts
 DRIVER_DIR=src/lib/drivers
 
-LIBS=$(BUILD_DIR)/kernel_start.o $(DRIVER_DIR)/vga.c $(LIB_DIR)/io.c $(LIB_DIR)/memory.c $(LIB_DIR)/paging.c
-LIBS+=$(DRIVER_DIR)/pci.c $(DRIVER_DIR)/virtio.c $(DRIVER_DIR)/keyboard.c $(DRIVER_DIR)/graphics.c
-LIBS+=$(BUILD_DIR)/intasm.o $(INT_DIR)/pic.c $(INT_DIR)/idt.c $(INT_DIR)/exceptions.c $(INT_DIR)/interrupts.c $(LIB_DIR)/time.c
+LIBS=$(BUILD_DIR)/kernel_start.o $(DRIVER_DIR)/console.c $(LIB_DIR)/io.c $(LIB_DIR)/memory.c $(DRIVER_DIR)/keyboard.c $(LIB_DIR)/fpu.c $(DRIVER_DIR)/pci.c
+LIBS+=$(INT_DIR)/isr.c $(INT_DIR)/idt.c $(INT_DIR)/irq.c $(LIB_DIR)/time.c $(DRIVER_DIR)/graphics.c $(LIB_DIR)/math.c $(DRIVER_DIR)/ata.c
 
 ASMFILE=boot
 CFILE=kernel
+PROGRAM_FILE=programtoload
 
 # Automatically call everything in the order needed
-all: assemble compile drive_image qemu clean
+all: assemble compile drive_image addfiles qemu
 
 #
 # Create Boot Disk
 #
-drive_image: $(BUILD_DIR)/main.img
+drive_image:
 $(BUILD_DIR)/main.img: assemble compile
-	dd if=/dev/zero of=$(BUILD_DIR)/main.img bs=512 count=1024
-	dd if=$(BUILD_DIR)/$(ASMFILE).bin of=$(BUILD_DIR)/main.img conv=notrunc
-	dd if=$(BUILD_DIR)/$(CFILE).bin of=$(BUILD_DIR)/main.img bs=512 seek=1 conv=notrunc
+	mkdir -p isodir/boot/grub
+	cp $(BUILD_DIR)/$(CFILE).bin isodir/boot/$(CFILE).bin
+	cp grub.cfg isodir/boot/grub/grub.cfg
+	grub-mkrescue -o build/main.iso isodir
 
 #
 # Assemble
 #
 assemble: $(SRC_DIR)/$(ASMFILE).asm
-	$(ASM) $(SRC_DIR)/$(ASMFILE).asm -o $(BUILD_DIR)/$(ASMFILE).bin
+	$(ASM) -f bin $(SRC_DIR)/$(PROGRAM_FILE).asm -o $(BUILD_DIR)/$(PROGRAM_FILE).bin
+	$(ASM) -f bin $(SRC_DIR)/programtoload.asm -o $(BUILD_DIR)/programtoload.bin
 
 #
 # Compile
 #
 compile: $(SRC_DIR)/$(CFILE).c
-	$(ASM) -felf64 $(SRC_DIR)/kernel_start.asm -o $(BUILD_DIR)/kernel_start.o
-	$(ASM) -felf64 $(INT_DIR)/interrupts.asm -o $(BUILD_DIR)/intasm.o
-	$(CCOM) -o $(BUILD_DIR)/$(CFILE).bin $(SRC_DIR)/$(CFILE).c $(LIBS) $(CFLAGS)
+	$(ASM) -f elf32 $(SRC_DIR)/kernel_start.asm -o $(BUILD_DIR)/kernel_start.o
+	$(CCOM) -m32 -o $(BUILD_DIR)/$(CFILE).bin $(SRC_DIR)/$(CFILE).c $(LIBS) $(CFLAGS)
 
 #
 # Run
@@ -51,9 +51,20 @@ compile: $(SRC_DIR)/$(CFILE).c
 qemu: $(BUILD_DIR)/main.img
 	qemu-system-$(ARCH) $(EMARGS)
 
+addfiles:
+	sudo mount -o loop,rw bin/harddisk.vdi mnt
+	sudo cp $(BUILD_DIR)/programtoload.bin mnt/programtoload.bin
+	sudo umount mnt
+
+# Because for some reason .img is write protected.
+hard_drive:
+	qemu-img create -f raw bin/harddisk.vdi 2G
+	mkfs.fat -F 32 bin/harddisk.vdi
+
 #
 # Clean
 #
 clean:
 	rm -rf build/*
+	rm -rf isodir/*
 

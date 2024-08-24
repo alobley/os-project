@@ -1,106 +1,199 @@
 BITS 32
-CPU x64
+CPU 386
 
-section .text.prologue
 extern kernel_main
-extern __stack_start
 
-; Looks like we get 2 GiB out of this. It should be fine for a while. I hope.
-enable_paging:
-    mov eax, p3_table
-    or eax, 0b11
-    mov dword [p4_table + 0], eax
+MBALIGN equ 1 << 0
+MEMINFO equ 1 << 1
+MBFLAGS equ MBALIGN | MEMINFO
+MAGIC equ 0x1BADB002
+CHECKSUM equ -(MAGIC + MBFLAGS)
 
-    mov eax, p2_table
-    or eax, 0b11
-    mov dword [p3_table + 0], eax
+section .multiboot
+align 4
+    dd MAGIC
+    dd MBFLAGS
+    dd CHECKSUM
 
-    mov ecx, 0
-.map_p2_table:
-    mov eax, 0x200000
-    mul ecx
-    or eax, 0b10000011
-    mov [p2_table + ecx * 8], eax
-
-    inc ecx
-    cmp ecx, 512
-    jne .map_p2_table
-    jmp finish
-
-
-finish:
-    mov eax, p4_table
-    mov cr3, eax
-
-    mov eax, cr4
-    or eax, 1 << 5
-    mov cr4, eax
-
-    mov ecx, 0xC0000080
-    rdmsr
-    or eax, 1 << 8
-    wrmsr
-
-    mov eax, cr0
-    or eax, 1 << 31
-    or eax, 1 << 16
-    mov cr0, eax
-
-    lgdt [gdt64.pointer]
-
-    ; Jump to the kernel
-    jmp gdt64.code:start
-
-BITS 64
-
-start:
+section .text
+global _start:function (_start.end - _start)
+_start:
+    push eax
+    push ebx
     cli
-    mov ax, gdt64.data
+
+    lgdt [gdtp]
+
+    mov ax, (gdt_data_segment - gdt_start)
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ss, ax
 
-    mov rbp, __stack_start
-    lea rsp, [__stack_start + 4096]
+    mov esi, stack_begin
+.clear_stack:
+    mov byte [esi], 0
+    inc esi
+    cmp esi, stack
+    je .done
 
-    jmp kernel_main
+.done:
+    pop ebx
+    pop eax
+    mov ebp, stack_begin
+    mov esp, stack
+
+    push ebx
+    mov eax, 0x1BADB002
+    push eax
+
+    call 0x8:kernel_main
+.end:
+
+global ExecuteProgram
+ExecuteProgram:
+    mov eax, 4[esp]
+
+    jmp eax
+
+    ret
+
+section .text.interrupts
+ALIGN 4
+
+
+global LoadIDT
+
+LoadIDT:
+    mov eax, 4[esp]
+    lidt [eax]
+    ret
+
+%macro ISR_NO_ERR 1
+global _isr%1
+_isr%1:
+    cli
+    push 0
+    push dword %1
+    jmp IsrCommon
+%endm
+
+%macro ISR_ERR 1
+global _isr%1
+_isr%1:
+    cli
+    push dword %1
+    jmp IsrCommon
+%endm
+
+ISR_NO_ERR 0
+ISR_NO_ERR 1
+ISR_NO_ERR 2
+ISR_NO_ERR 3
+ISR_NO_ERR 4
+ISR_NO_ERR 5
+ISR_NO_ERR 6
+ISR_NO_ERR 7
+ISR_ERR 8
+ISR_NO_ERR 9
+ISR_ERR 10
+ISR_ERR 11
+ISR_ERR 12
+ISR_ERR 13
+ISR_ERR 14
+ISR_NO_ERR 15
+ISR_NO_ERR 16
+ISR_NO_ERR 17
+ISR_NO_ERR 18
+ISR_NO_ERR 19
+ISR_NO_ERR 20
+ISR_NO_ERR 21
+ISR_NO_ERR 22
+ISR_NO_ERR 23
+ISR_NO_ERR 24
+ISR_NO_ERR 25
+ISR_NO_ERR 26
+ISR_NO_ERR 27
+ISR_NO_ERR 28
+ISR_NO_ERR 29
+ISR_NO_ERR 30
+ISR_NO_ERR 31
+ISR_NO_ERR 32
+ISR_NO_ERR 33
+ISR_NO_ERR 34
+ISR_NO_ERR 35
+ISR_NO_ERR 36
+ISR_NO_ERR 37
+ISR_NO_ERR 38
+ISR_NO_ERR 39
+ISR_NO_ERR 40
+ISR_NO_ERR 41
+ISR_NO_ERR 42
+ISR_NO_ERR 43
+ISR_NO_ERR 44
+ISR_NO_ERR 45
+ISR_NO_ERR 46
+ISR_NO_ERR 47
+
+extern ISRHandler
+
+IsrCommon:
+    pusha
+    push ds
+    push es
+    push fs
+    push gs
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    cld
+
+    push esp
+    call ISRHandler
+    pop esp
+
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    popa
+
+    add esp, 8
+
+    iret
 
 section .rodata
-gdt64:
-.null: equ $ - gdt64
-    dq 0
-.code: equ $ - gdt64
-    dd 0xFFFF
-    db 0
-    db (1 << 7) | (1 << 4) | (1 << 3) | (1 << 1)
-    db (1 << 7) | (1<<5) | 0xF
-    db 0
-.data: equ $ - gdt64
-    dd 0xFFFF
-    db 0
-    db (1 << 7) | (1 << 4) | (1 << 1)
-    db (1 << 7) | (1 << 6) | 0xF
-    db 0
-.tss: equ $ - gdt64
-    dd 0x00000068
-    dd 0x00CF8900
-.pointer:
-    dw .pointer - gdt64 - 1
-    dq gdt64
-
-section .bss
-ALIGN 4096
-
-p4_table:
-    resb 4096
-p3_table:
-    resb 4096
-p2_table:
-    resb 4096
+ALIGN 16
+gdtp:
+    dw gdt_end - gdt_start - 1
+    dd gdt_start
 
 ALIGN 16
-stack_bottom:
-    resb 4096
-stack_top:
+gdt_start:
+gdt_null:
+    dq 0
+gdt_code_segment:
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 0b10011010
+    db 0b11001111
+    db 0x00
+gdt_data_segment:
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 0b10010010
+    db 0b11001111
+    db 0x00
+gdt_end:
+
+section .bss
+align 16
+stack_begin:
+    resb 0x4000
+stack:
