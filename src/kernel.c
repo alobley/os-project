@@ -33,29 +33,6 @@ void InitializeHardware(){
     InitializeKeyboard();
 }
 
-BIOS_parameter_block_t* ReadFat32Header(disk_info_t* disk){
-    if(disk == NULL || disk->CurrentMode != LBA_48_BIT){
-        kprintf("Disk is currently unsupported.\n");
-        return NULL;
-    }
-
-    uint16 sectorCount = 1;
-    lba_offset_t lbaOffset = FAT32_BOOT_SECTOR_OFFSET;
-
-    uint8* buffer = ReadSectors(disk, lbaOffset, sectorCount);
-    if(buffer == NULL){
-        kprintf("Failed to read from the disk.\n");
-        return NULL;
-    }
-
-    BIOS_parameter_block_t* header = buffer;
-
-    kprintf("OEM name: ");
-    kprintf(header->oemName);
-    kprintf("\n");
-
-    return header;
-}
 
 void ChangeVolumeLabel(disk_info_t* disk, BIOS_parameter_block_t* header){
     if(disk == NULL || disk->CurrentMode != LBA_48_BIT){
@@ -75,27 +52,55 @@ void ChangeVolumeLabel(disk_info_t* disk, BIOS_parameter_block_t* header){
     WriteSectors(disk, lbaOffset, sectorCount, (uint16* )header);
 }
 
-void GetCompatibility(disk_info_t* disk){
-    if(disk->deviceType == DEVTYPE_ATA){
-        kprintf("Device is ATA/PATA compatible!\n");
-    }
-}
-
 void DefineHardDisk(disk_info_t* disk){
-    ClearTerminal();
+    if(disk == NULL){
+        return;
+    }
+    
     // See if what we did works by reading the FAT32 header from a given disk
     BIOS_parameter_block_t* header = ReadFat32Header(disk);
-    kprintf("Disk: %d\n", disk->diskID);
-    kprintf("Volume name: ");
-    WriteStrSize(header->volumeLabel, 11);
-    kprintf("\n");
+    fat_fs_t* fs = DefineFileSystem(header, disk);
 
-    kprintf("File system type: ");
-    WriteStrSize(header->filesystemType, 8);
-    kprintf("\n");
+    kfree(header);
 
-    kprintf("Size of disk %d in bytes: %llu\n", disk->diskID, disk->sizeInBytes);
-    kprintf("Current disk mode: %d\n", disk->CurrentMode);
+    if(fs == NULL){
+        kprintf("There was an error!\n");
+        return;
+    }
+
+    if(fs->fsType != FS_FAT32){
+        kprintf("The disk is not formatted to FAT32!\n");
+        return;
+    }
+
+    kprintf("Fs type: %d (FAT32)\n", fs->fsType);
+
+    kprintf("Disk size: %d\n", fs->totalSectors * FAT32_SECTOR_SIZE);
+
+    kprintf("First sector containing a FAT: %d\n", fs->firstFatSector);
+
+    GetCompatibility(disk);
+
+    ParseRoot(fs, disk);
+
+    uintptr_t programAddr = (uintptr_t)LoadFile(fs, disk, (void *)300000000, "PRGM.BIN");
+
+    uint32* thing = (uint32* )programAddr;
+
+    kprintf("Address: %llu\n", programAddr);
+
+    kprintf("Value loaded: 0x%x\n", *thing);
+
+    for(;;) hlt();
+
+    int (*FileToCall)() = (int (*)())programAddr;
+
+    if(programAddr == 0){
+        kprintf("File not found!\n");
+    }else{
+        uint32 hi = FileToCall();
+        kprintf("Program returned: %llu\n", hi);
+    }
 
     //ChangeVolumeLabel(disk, header);
 }
@@ -124,7 +129,7 @@ void kernel_main(){
     disk_info_t* hardDisks[MAX_SUPPORTED_DRIVES];
 
     // Search the ATA buses for disks
-    for(int i = 0; i < MAX_SUPPORTED_DRIVES + 1; i++){
+    for(int i = 0; i <= MAX_SUPPORTED_DRIVES; i++){
         hardDisks[i] = InitializeDisk(i);
     }
 
@@ -145,6 +150,8 @@ void kernel_main(){
         //ScanDrive(deviceToUse);
         ScanSupportedModes(deviceToUse);
     }
+
+    ClearTerminal();
 
     DefineHardDisk(hardDisks[1]);
 

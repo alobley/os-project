@@ -4,6 +4,8 @@
 #include "stddef.h"
 #include "types.h"
 
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 f64 sqrt(f64 x);
 f64 pow(f64 base, f64 exp);
 int abs(int x);

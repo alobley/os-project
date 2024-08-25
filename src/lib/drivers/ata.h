@@ -24,6 +24,10 @@
 #define DEVTYPE_SATA 2
 #define DEVTYPE_SATAPI 3
 
+#define FS_NONE_UNSUPPORTED 0
+#define FS_FAT32 1
+#define FS_ISO 2
+
 typedef unsigned long long lba_offset_t;
 
 typedef struct ModeSupport{
@@ -42,12 +46,14 @@ typedef struct DiskInfo {
     uint32 deviceType;
     uint64 sizeInBytes;
     uint16 basePort;
+    uint8 fsType;
 } disk_info_t;
 
 disk_info_t* InitializeDisk(uint8 deviceID);
 void ScanDrive(disk_info_t* disk);
 void ScanSupportedModes(disk_info_t* disk);
-void* ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCount);
+void ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCount, uint16* buffer);
 void WriteSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCount, uint16* buffer);
+void GetCompatibility(disk_info_t* disk);
 
 #endif

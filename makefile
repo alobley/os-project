@@ -12,7 +12,8 @@ INT_DIR=src/lib/interrupts
 DRIVER_DIR=src/lib/drivers
 
 LIBS=$(BUILD_DIR)/kernel_start.o $(DRIVER_DIR)/console.c $(LIB_DIR)/io.c $(LIB_DIR)/memory.c $(DRIVER_DIR)/keyboard.c $(LIB_DIR)/fpu.c $(DRIVER_DIR)/pci.c
-LIBS+=$(INT_DIR)/isr.c $(INT_DIR)/idt.c $(INT_DIR)/irq.c $(LIB_DIR)/time.c $(DRIVER_DIR)/graphics.c $(LIB_DIR)/math.c $(DRIVER_DIR)/ata.c
+LIBS+=$(INT_DIR)/isr.c $(INT_DIR)/idt.c $(INT_DIR)/irq.c $(LIB_DIR)/time.c $(DRIVER_DIR)/graphics.c $(LIB_DIR)/math.c $(DRIVER_DIR)/ata.c $(DRIVER_DIR)/fat32.c
+LIBS+=$(LIB_DIR)/string.c
 
 ASMFILE=boot
 CFILE=kernel
@@ -36,7 +37,7 @@ $(BUILD_DIR)/main.img: assemble compile
 #
 assemble: $(SRC_DIR)/$(ASMFILE).asm
 	$(ASM) -f bin $(SRC_DIR)/$(PROGRAM_FILE).asm -o $(BUILD_DIR)/$(PROGRAM_FILE).bin
-	$(ASM) -f bin $(SRC_DIR)/programtoload.asm -o $(BUILD_DIR)/programtoload.bin
+	$(ASM) -f bin $(SRC_DIR)/programtoload.asm -o $(BUILD_DIR)/prgm.bin
 
 #
 # Compile
@@ -53,7 +54,7 @@ qemu: $(BUILD_DIR)/main.img
 
 addfiles:
 	sudo mount -o loop,rw bin/harddisk.vdi mnt
-	sudo cp $(BUILD_DIR)/programtoload.bin mnt/programtoload.bin
+	sudo cp $(BUILD_DIR)/prgm.bin mnt/prgm.bin
 	sudo umount mnt
 
 # Because for some reason .img is write protected.

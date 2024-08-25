@@ -149,7 +149,7 @@ char* ConvertUnSigned(uint32 number, uint8 base){
     int i = 0;
 
     if(number == 0){
-        buffer[i] = 0;
+        buffer[i] = '0';
         buffer[i++] = '\0';
         return buffer;
     }

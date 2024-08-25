@@ -3,7 +3,9 @@
 #include "../io.h"
 #include "../time.h"
 #include "../memory.h"
+#include "../string.h"
 #include "console.h"
+#include "fat32.h"
 //
 // IDE driver
 //
@@ -314,6 +316,24 @@ uint32 DetectDeviceType(disk_info_t* diskInfo){
 // 4. Read the status port again. If the value of the register is 0, the drive does not exist.
 // IMPORTANT - after sending an identify command, the device will send 256 word values. Read them and store them (just read the data port 256 times).
 
+void SetMode(disk_info_t* diskInfo){
+    if(diskInfo->supportedModes->lba48){
+        // Preferred mode is 48-bit LBA
+        diskInfo->CurrentMode = LBA_48_BIT;
+    }else if(diskInfo->supportedModes->lba28){
+        // If 48-bit LBA isn't supported, try 28-bit LBA
+        diskInfo->CurrentMode = LBA_28_BIT;
+    }else if(diskInfo->supportedModes->pio48){
+        // If 28-bit LBA isn't supported, try 48-bit PIO mode.
+        diskInfo->CurrentMode = PIO_48_BIT;
+    }else if(diskInfo->supportedModes->pio28){
+        // If 48-bit PIO is somehow not supported, try 28-bit PIO mode
+        diskInfo->CurrentMode = PIO_28_BIT;
+    }else if(diskInfo->supportedModes->chs){
+        // Final fallback if nothing else is supported. This should never happen unless the disk is very old.
+        diskInfo->CurrentMode = CHS_MODE;
+    }
+}
 
 // Find a given hard disk in the ATA controller, identify it, and initialize it.
 disk_info_t* InitializeDisk(uint8 deviceID){
@@ -394,6 +414,14 @@ disk_info_t* InitializeDisk(uint8 deviceID){
     // Set the current addressing mode.
     SetMode(diskInfo);
 
+    BIOS_parameter_block_t* header = ReadFat32Header(diskInfo);
+
+    if(strcmp(header->filesystemType, "FAT32") == 0){
+        diskInfo->fsType = FS_FAT32;
+    }else{
+        diskInfo->fsType = FS_NONE_UNSUPPORTED;
+    }
+
     // Return the pointer to the buffer
     return diskInfo;
 }
@@ -466,30 +494,11 @@ void ScanSupportedModes(disk_info_t* disk){
     }
 }
 
-void SetMode(disk_info_t* diskInfo){
-    if(diskInfo->supportedModes->lba48){
-        // Preferred mode is 48-bit LBA
-        diskInfo->CurrentMode = LBA_48_BIT;
-    }else if(diskInfo->supportedModes->lba28){
-        // If 48-bit LBA isn't supported, try 28-bit LBA
-        diskInfo->CurrentMode = LBA_28_BIT;
-    }else if(diskInfo->supportedModes->pio48){
-        // If 28-bit LBA isn't supported, try 48-bit PIO mode.
-        diskInfo->CurrentMode = PIO_48_BIT;
-    }else if(diskInfo->supportedModes->pio28){
-        // If 48-bit PIO is somehow not supported, try 28-bit PIO mode
-        diskInfo->CurrentMode = PIO_28_BIT;
-    }else if(diskInfo->supportedModes->chs){
-        // Final fallback if nothing else is supported. This should never happen unless the disk is very old.
-        diskInfo->CurrentMode = CHS_MODE;
-    }
-}
-
 // Read a given sector of a disk given an LBA offset. Only supporting 48-bit PIO LBA for now.
-void* ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCount){
+void ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCount, uint16* buffer){
     if(diskInfo->CurrentMode != LBA_48_BIT){
         // Unsupported mode
-        return NULL;
+        return;
     }
     uint16 basePort = GetBasePort(diskInfo->diskID);
     uint8 masterSlave = MasterOrSlave(diskInfo->diskID);
@@ -515,10 +524,10 @@ void* ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCo
     outb(ATA_DRIVE_CMD_STATUS(basePort), READ_SECTORS_EXT);
 
     // This will truly test my memory management functions. I hope they work like I expected them to.
-    uint16* buffer = kmalloc(sectorCount * MBR_SECTOR_SIZE);
+    //uint16* buffer = kmalloc(sectorCount * MBR_SECTOR_SIZE);
     if(buffer == NULL){
-        kprintf("Failed to allocate enough memory for disk operation!\n");
-        return NULL;
+        kprintf("There is no buffer!\n");
+        return;
     }
     memset(buffer, 0, sectorCount * MBR_SECTOR_SIZE);
 
@@ -529,7 +538,7 @@ void* ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCo
             if(status & ERROR){
                 kprintf("There was an error reading from the disk!\n");
                 kfree(buffer);
-                return NULL;
+                return;
             }
         }
 
@@ -539,7 +548,7 @@ void* ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCo
         }
     }
 
-    return buffer;
+    //return buffer;
 }
 
 
@@ -589,4 +598,23 @@ void WriteSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCo
 
     // Flush the cache because we hate speed (less prone to failure)
     outb(ATA_DRIVE_CMD_STATUS(basePort), ATA_FLUSH_CACHE);
+}
+
+
+void GetCompatibility(disk_info_t* disk){
+    if(disk->deviceType == DEVTYPE_ATA){
+        kprintf("Device is ATA/PATA compatible!\n");
+    }
+
+    if(disk->deviceType == DEVTYPE_ATAPI){
+        kprintf("Device is ATAPI/PATAPI!\n");
+    }
+
+    if(disk->deviceType == DEVTYPE_SATA){
+        kprintf("Device is SATA compatible!\n");
+    }
+
+    if(disk->deviceType == DEVTYPE_SATAPI){
+        kprintf("Device is SATAPI compatible!\n");
+    }
 }
