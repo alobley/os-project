@@ -53,12 +53,14 @@ qemu: $(BUILD_DIR)/main.img
 	qemu-system-$(ARCH) $(EMARGS)
 
 addfiles:
+	mkdir -p mnt
 	sudo mount -o loop,rw bin/harddisk.vdi mnt
 	sudo cp $(BUILD_DIR)/prgm.bin mnt/prgm.bin
 	sudo umount mnt
 
 # Because for some reason .img is write protected.
 hard_drive:
+	mkdir -p bin
 	qemu-img create -f raw bin/harddisk.vdi 2G
 	mkfs.fat -F 32 bin/harddisk.vdi
 
