@@ -537,7 +537,7 @@ void ReadSectors(disk_info_t* diskInfo, lba_offset_t lbaOffset, uint16 sectorCou
         while ((status = inb(ATA_DRIVE_CMD_STATUS(basePort))) & FLG_BUSY){
             if(status & ERROR){
                 kprintf("There was an error reading from the disk!\n");
-                kfree(buffer);
+                //kfree(buffer);
                 return;
             }
         }

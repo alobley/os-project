@@ -83,24 +83,21 @@ void DefineHardDisk(disk_info_t* disk){
 
     ParseRoot(fs, disk);
 
-    uintptr_t programAddr = (uintptr_t)LoadFile(fs, disk, (void *)300000000, "PRGM.BIN");
+    return;
 
-    uint32* thing = (uint32* )programAddr;
+    int (*FileToCall)() = (int (*)())LoadFile(fs, disk, (void *)300000000, "PRGM.BIN");
 
-    kprintf("Address: %llu\n", programAddr);
+    uint32 hi = *((uint32* )*FileToCall);
 
-    kprintf("Value loaded: 0x%x\n", *thing);
-
-    for(;;) hlt();
-
-    int (*FileToCall)() = (int (*)())programAddr;
-
-    if(programAddr == 0){
-        kprintf("File not found!\n");
-    }else{
-        uint32 hi = FileToCall();
-        kprintf("Program returned: %llu\n", hi);
+    if(hi == 0){
+        kprintf("The file could not be loaded!\n");
+        return;
     }
+
+    kprintf("Value at loaded memory location: 0x%x\n", hi);
+
+    uint32 the = FileToCall();
+    kprintf("Program returned: %llu\n", the);
 
     //ChangeVolumeLabel(disk, header);
 }

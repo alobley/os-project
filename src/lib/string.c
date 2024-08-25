@@ -16,3 +16,14 @@ void strcpy(char* s1, const char* s2, size_t length){
         s1[i] = s2[i];
     }
 }
+
+void* memcpy(void* dest, const void* src, size_t n) {
+    unsigned char* d = dest;
+    const unsigned char* s = src;
+
+    while (n--) {
+        *d++ = *s++;
+    }
+
+    return dest;
+}

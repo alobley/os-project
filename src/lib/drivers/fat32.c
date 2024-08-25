@@ -208,8 +208,10 @@ void* LoadFile(fat_fs_t* fs, disk_info_t* disk, void* loadAddress, char* fileNam
     ReadSectors(disk, rootStart, fs->sectorsPerCluster, buffer);
 
     size_t numEntries = FAT32_SECTOR_SIZE / sizeof(fat_cluster_t);
+
+    void* fileData = NULL;
     
-    for(size_t i = 0; i < numEntries; ++i){
+    for(size_t i = 0; i < numEntries; i++){
         fat_cluster_t* entry = (fat_cluster_t* )(buffer + i * sizeof(fat_cluster_t));
 
         if(entry->filename[0] == NO_ISSUE){
@@ -242,9 +244,7 @@ void* LoadFile(fat_fs_t* fs, disk_info_t* disk, void* loadAddress, char* fileNam
             }
         }
 
-        void* fileData = NULL;
-
-        if(loadAddress == 0){
+        if(loadAddress == NULL){
             fileData = kmalloc(entry->fileSize);
         }else{
             fileData = loadAddress;
@@ -252,6 +252,9 @@ void* LoadFile(fat_fs_t* fs, disk_info_t* disk, void* loadAddress, char* fileNam
 
         uint32 bytesRemaining = entry->fileSize;
         uint32 cluster = (entry->highAddr << 16) | (entry->lowAddr);
+
+        kprintf("Value of i: %llu\n", i);
+        kprintf("Number of entries: %llu\n", numEntries);
 
         while(cluster >= 2 && cluster < 0xFFFFFF8 && bytesRemaining > 0){
             uint32 sectorCount = min(fs->sectorsPerCluster, (bytesRemaining + FAT32_SECTOR_SIZE - 1) / FAT32_SECTOR_SIZE);
@@ -268,7 +271,8 @@ void* LoadFile(fat_fs_t* fs, disk_info_t* disk, void* loadAddress, char* fileNam
 
             cluster = *((uint32*)((uint8*)&fatBuffer + fatOffset)) & 0x0FFFFFFF;
         }
-
-        return fileData;
     }
+
+    kfree(buffer);
+    return fileData;
 }
