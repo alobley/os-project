@@ -130,7 +130,7 @@ void kernel_main(){
         hardDisks[i] = InitializeDisk(i);
     }
 
-    // Wait untul the user presses enter to scan for ATA-compatible hard drives
+    // Wait until the user presses enter to scan for ATA-compatible hard drives
     key = 0;
     kprintf("Press Enter to scan for disks.\n");
     while(key != ENTER){
