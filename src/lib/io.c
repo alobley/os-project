@@ -1,51 +1,37 @@
 #include "io.h"
 
-// Get a byte in from a port
-unsigned char inb(unsigned short port){
-    unsigned char data;
+// Get a byte of data from a port
+uint8 inb(uint16 port){
+    uint8 data;
     asm volatile("in %1, %0" : "=a" (data) : "Nd" (port));
     return data;
 }
 
-// Send a byte out to a port
-void outb(unsigned short port, unsigned char data){
+// Send a byte of data to a port
+void outb(uint16 port, uint8 data){
     asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
 }
 
-unsigned short inw(unsigned short port){
-    unsigned short data;
+// Get 16 bits of data from a port
+uint16 inw(uint16 port){
+    uint16 data;
     asm volatile("in %1, %0" : "=a" (data) : "Nd" (port));
     return data;
 }
 
-void outw(unsigned short port, unsigned short data){
+// Send 16 bits of data out a port
+void outw(uint16 port, uint16 data){
     asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
 }
 
 // Get a 32-bit piece of data from a port
-unsigned int inl(unsigned short port){
-    unsigned int data;
+uint32 inl(uint16 port){
+    uint32 data;
     asm volatile("in %1, %0" : "=a" (data) : "Nd" (port));
     return data;
 }
 
 // Send 32 bits of data out to a port
-void outl(unsigned short port, unsigned int data){
+void outl(uint16 port, uint32 data){
     asm volatile("out %0, %1" : : "a" (data), "Nd" (port));
-}
-
-void mmiowriteb(void *p, unsigned char data){
-    *(volatile unsigned char *)(p) = data;
-}
-
-unsigned char mmioreadb(void *p){
-    return *(volatile unsigned char *)(p);
-}
-
-void mmiowritel(void *p, unsigned int data){
-    *(volatile unsigned int *)(p) = data;
-}
-
-unsigned int mmioreadl(void *p){
-    return *(volatile unsigned int *)(p);
 }
