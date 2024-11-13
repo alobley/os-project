@@ -17,6 +17,24 @@
 // Reference a small example for showcase
 extern int CliHandler();
 
+// 8042 reset
+void reboot(){
+    uint8 good = 0x02;
+    while(good & 0x02){
+        good = inb(0x64);
+    }
+    outb(0x64, 0xFE);
+}
+
+// QEMU and Bochs only. ACPI support pending.
+void shutdown(){
+    // Try QEMU shutdown
+    outw(0x604, 0x2000);
+
+    // Try Bochs shutdown
+    outw(0xB004, 0x2000);
+}
+
 // Initializes all the required components
 void InitializeHardware(){
     InitializeMemory();
@@ -40,8 +58,7 @@ void kernel_main(){
 
     Sleep(1000);
 
-    asm volatile("lidt 0");
-    asm volatile("int $0x1");
+    reboot();
 
     for(;;) asm("hlt");
 }

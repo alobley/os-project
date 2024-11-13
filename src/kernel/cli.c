@@ -12,20 +12,8 @@
 // Temporary CLI shell built into the kernel untill I get filesystem and ABI support
 
 extern void LittleGame();
-
-// 8042 reset
-void reboot(){
-    uint8 good = 0x02;
-    while(good & 0x02){
-        good = inb(0x64);
-    }
-    outb(0x64, 0xFE);
-}
-
-// QEMU-specific
-void shutdown(){
-    outw(0x604, 0x2000);
-}
+extern void reboot();
+extern void shutdown();
 
 void ProcessCommand(const char* cmd){
     if(strlen(cmd) == 0){
