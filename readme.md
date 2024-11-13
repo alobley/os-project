@@ -51,7 +51,6 @@ Ensure you have the following installed:
 
 ### Build Instructions
 1. Clone the repository:
-   ```bash```
    `git clone https://github.com/alobley/os-project.git`
 2. Change directory:
     `cd os-project`
