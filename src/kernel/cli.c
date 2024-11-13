@@ -9,7 +9,23 @@
 #include <pcspkr.h>
 #include <string.h>
 
+// Temporary CLI shell built into the kernel untill I get filesystem and ABI support
+
 extern void LittleGame();
+
+// 8042 reset
+void reboot(){
+    uint8 good = 0x02;
+    while(good & 0x02){
+        good = inb(0x64);
+    }
+    outb(0x64, 0xFE);
+}
+
+// QEMU-specific
+void shutdown(){
+    outw(0x604, 0x2000);
+}
 
 void ProcessCommand(const char* cmd){
     if(strlen(cmd) == 0){
@@ -22,6 +38,10 @@ void ProcessCommand(const char* cmd){
         ClearTerminal();
     }else if(strcmp(cmd, "hi")){
         printk("Hello!\n");
+    }else if(strcmp(cmd, "reboot")){
+        reboot();
+    }else if(strcmp(cmd, "shutdown")){
+        shutdown();
     }else{
         printk("Invalid Command!\n");
     }
