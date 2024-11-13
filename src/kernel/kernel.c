@@ -7,6 +7,7 @@
 #include <time.h>
 #include <fpu.h>
 #include <pcspkr.h>
+#include <string.h>
 
 // To update:
 // Do git add [filename], or git add .
@@ -15,18 +16,6 @@
 
 // Reference a small example for showcase
 extern void LittleGame();
-
-bool strcmp(const char* in1, const char* in2){
-    for(int i = 0; i < strlen(in1); i++){
-        if(in2[i] != in1[i]){
-            // They are not the same
-            return false;
-        }
-    }
-
-    // They are the same
-    return true;
-}
 
 void ProcessCommand(const char* cmd){
     if(strlen(cmd) == 0){

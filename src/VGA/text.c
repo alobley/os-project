@@ -4,7 +4,7 @@
 #include <util.h>
 #include <stdarg.h>
 #include <time.h>
-
+#include <string.h>
 
 
 
@@ -112,22 +112,6 @@ void WriteStrSize(const char* str, size_t size){
     }
 
     MoveCursor(currentX, currentY);
-}
-
-int16 GetX(){
-    return currentX;
-}
-
-int16 GetY(){
-    return currentY;
-}
-
-void SetX(int16 x){
-    currentX = x;
-}
-
-void SetY(int16 y){
-    currentY = y;
 }
 
 void reverse(char* str, int length){

@@ -34,13 +34,5 @@ static inline void* memcpy(void* dest, const void* src, size_t n){
     return dest; // Return the destination pointer
 }
 
-static inline uint32 strlen(const char* string){
-    uint32 len = 0;
-    while(*(string + len) != '\0'){
-        len++;
-    }
-    return len;
-}
-
 
 #endif  // UTIL_H
