@@ -61,5 +61,6 @@ Ensure you have the following installed:
 Feel free to fork this if you wish to do so, but the goal of this project is to see what I can do if everything is supported by my own code. Feedback, however, is always welcome.
 
 ## License
-- The **GRand Unified Bootloader (GRUB)**, which is used to load the OS, is under the GNU General Public License (GPL). The GPL therefore expands to the whole project.
-
+This project is dual-licensed:
+- The **GRand Unified Bootloader (GRUB)**, which is used to load the OS, is under the GNU General Public License (GPL). To obtain the GRUB source: `git clone https://git.savannah.gnu.org/git/grub.git`
+- All other parts of the project are licensed under the **MIT License**. See the `LICENSE` file in the root directory for more information.
