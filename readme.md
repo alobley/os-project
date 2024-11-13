@@ -51,12 +51,11 @@ Ensure you have the following installed:
 
 ### Build Instructions
 1. Clone the repository:
-   ```bash```
-   git clone https://github.com/alobley/os-project.git
+   `git clone https://github.com/alobley/os-project.git`
 2. Change directory:
-    cd os-project
+    `cd os-project`
 3. Build and run the project:
-    make
+    `make`
 
 ## Contributing
 Feel free to fork this if you wish to do so, but the goal of this project is to see what I can do if everything is supported by my own code. Feedback, however, is always welcome.
