@@ -14,4 +14,9 @@ void WriteStrSize(const char* str, size_t size);
 
 void MoveCursor(uint16 x, uint16 y);
 
+int16 GetX();
+int16 GetY();
+void SetX(int16 x);
+void SetY(int16 y);
+
 #endif

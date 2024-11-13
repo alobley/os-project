@@ -4,11 +4,13 @@
 #include <idt.h>
 #include <irq.h>
 #include <vga.h>
+#include <time.h>
 
 #define KEYBOARD_ISR 0x21
 #define KEYBOARD_IRQ 1
 
-static byte keysDown[256];
+static bool keysDown[256];
+static uint8 lastKeyPressed = 0;
 
 void WaitForKeyPress(){
     uint8 currentKey = 0;
@@ -17,14 +19,46 @@ void WaitForKeyPress(){
     }
 }
 
+void WaitForRelease(uint8 ScanCode){
+    while(IsKeyPressed(ScanCode));
+}
+
+static uint64 lastPressTime = 0;
+
+bool shiftPressed = false;
+
+
 void kb_handler(){
     uint8 scanCode = inb(KBD_DATA_PORT);
-    
+
+    lastKeyPressed = 0;
+
     if(scanCode & EVENT_KEYUP){
+        // On key release
+        if((scanCode ^ EVENT_KEYUP) == LSHIFT || (scanCode ^ EVENT_KEYUP) == RSHIFT){
+            // Detect a shift release
+            shiftPressed = false;
+        }
         keysDown[scanCode ^ EVENT_KEYUP] = false;
+        return;
+    }
+
+    if(scanCode == LSHIFT || scanCode == RSHIFT){
+        shiftPressed = true;
+    }
+    
+    if(keyASCII[scanCode] != 0){
+        if(shiftPressed){
+            keysDown[scanCode] = true;
+            lastKeyPressed = ASCIIUpper[scanCode];
+        }else{
+            keysDown[scanCode] = true;
+            lastKeyPressed = keyASCII[scanCode];
+        }
     }else{
         keysDown[scanCode] = true;
     }
+
 
     outb(PIC_EOI, PIC_EOI);
 }
@@ -43,6 +77,12 @@ bool IsKeyPressed(uint8 scanCode){
     }else{
         return false;
     }
+}
+
+uint8 GetLastKey(){
+    uint8 key = lastKeyPressed;
+    lastKeyPressed = 0;
+    return key;
 }
 
 void InitializeKeyboard(){

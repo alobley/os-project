@@ -21,8 +21,8 @@ void MoveCursor(uint16 x, uint16 y){
     *(uint16 *)((VGA_TEXT_MODE_START + (offset * 2)) + 1) = 0x0F;
 }
 
-uint16 currentX = 0;
-uint16 currentY = 0;
+int16 currentX = 0;
+int16 currentY = 0;
 
 void ClearTerminal(){
     for(int i = 0; i < (80 * 25)*2; i++){
@@ -48,12 +48,23 @@ void WriteStr(const char* str){
         if(str[i] == '\n'){
             NewLine();
             i++;
+        }else if(str[i] == '\b'){
+            currentX -= 1;
+            if(currentX < 0){
+                currentX = 0;
+            }
+            fb[currentX + (currentY * 80)] = (0x0F << 8) | ' ';
+            if(currentX + (currentY * 80) > 2000){
+                ClearTerminal();
+                WriteStr(str);
+            }
+            i++;
         }else{
             fb[currentX + (currentY * 80)] = (0x0F << 8) | str[i];
             i++;
             currentX += 1;
             if(currentX > 80){
-                currentX -= 80;
+                currentX = 0;
                 currentY += 1;
             }
             if(currentX + (currentY * 80) > 2000){
@@ -74,12 +85,23 @@ void WriteStrSize(const char* str, size_t size){
         if(str[i] == '\n'){
             NewLine();
             i++;
+        }else if(str[i] == '\b'){
+            currentX -= 1;
+            if(currentX < 0){
+                currentX = 0;
+            }
+            fb[currentX + (currentY * 80)] = (0x0F << 8) | ' ';
+            if(currentX + (currentY * 80) > 2000){
+                ClearTerminal();
+                WriteStr(str);
+            }
+            i++;
         }else{
             fb[currentX + (currentY * 80)] = (0x0F << 8) | str[i];
             i++;
             currentX += 1;
             if(currentX > 80){
-                currentX -= 80;
+                currentX = 0;
                 currentY += 1;
             }
             if(currentX + (currentY * 80) > 2000){
@@ -90,6 +112,22 @@ void WriteStrSize(const char* str, size_t size){
     }
 
     MoveCursor(currentX, currentY);
+}
+
+int16 GetX(){
+    return currentX;
+}
+
+int16 GetY(){
+    return currentY;
+}
+
+void SetX(int16 x){
+    currentX = x;
+}
+
+void SetY(int16 y){
+    currentY = y;
 }
 
 void reverse(char* str, int length){
@@ -164,7 +202,9 @@ char* ConvertUnSigned(uint32 number, uint8 base){
 }
 
 void printk(const char *str, ...){
-    //uint8* fb = (uint8* )VGA_TEXT_MODE_START;
+    if(str == '\0'){
+        return;
+    }
     va_list args;
     va_start(args, str);
 
@@ -213,6 +253,9 @@ void printk(const char *str, ...){
                 for(int j = 0; j < len; j++){
                     *(output + index + j) = argStr[j];
                 }
+            }else if(str[i] == 'c'){
+                int chr = va_arg(args, int);
+                *(output + index) = (char)chr;
             }else{
                 *(output + index) = '%';
                 index++;
