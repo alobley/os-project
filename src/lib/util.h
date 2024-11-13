@@ -34,5 +34,7 @@ static inline void* memcpy(void* dest, const void* src, size_t n){
     return dest; // Return the destination pointer
 }
 
+#define SYSCALL_INT 0x30
+
 
 #endif  // UTIL_H

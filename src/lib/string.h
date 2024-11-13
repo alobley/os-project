@@ -14,7 +14,12 @@ static inline uint32 strlen(const char* string){
 }
 
 static inline bool strcmp(const char* in1, const char* in2){
-    for(int i = 0; i < strlen(in1); i++){
+    int i;
+    if(strlen(in1) != strlen(in2)){
+        return false;
+    }
+
+    for(i = 0; i < strlen(in1); i++){
         if(in2[i] != in1[i]){
             // They are not the same
             return false;

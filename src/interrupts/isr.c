@@ -3,7 +3,7 @@
 #include <vga.h>
 #include <util.h>
 
-#define NUM_ISRS 48
+#define NUM_ISRS 49
 
 extern void _isr0(struct Registers*);
 extern void _isr1(struct Registers*);
@@ -53,6 +53,10 @@ extern void _isr44(struct Registers*);
 extern void _isr45(struct Registers*);
 extern void _isr46(struct Registers*);
 extern void _isr47(struct Registers*);
+extern void _isr48(struct Registers*);
+
+// Located in kernel.c
+extern void syscall_handler(struct Registers* regs);
 
 static void (*stubs[NUM_ISRS])(struct Registers*) = {
     _isr0,
@@ -103,6 +107,7 @@ static void (*stubs[NUM_ISRS])(struct Registers*) = {
     _isr45,
     _isr46,
     _isr47,
+    _isr48
 };
 
 static const char *exceptions[32] = {
@@ -174,6 +179,8 @@ void InitISR(){
     for(size_t i = 0; i < 32; i++){
         InstallISR(i, ExceptionHandler);
     }
+
+    InstallISR(SYSCALL_INT, syscall_handler);
 }
 
 void spurious(){

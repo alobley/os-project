@@ -23,8 +23,6 @@ void WaitForRelease(uint8 ScanCode){
     while(IsKeyPressed(ScanCode));
 }
 
-static uint64 lastPressTime = 0;
-
 bool shiftPressed = false;
 
 

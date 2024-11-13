@@ -35,6 +35,12 @@ void shutdown(){
     outw(0xB004, 0x2000);
 }
 
+// This is what is processed when you perform an ABI call (int 0x30). It works! TBI.
+// EAX: The function to call
+void syscall_handler(struct Registers *regs){
+    printk("The system was called!\n");
+}
+
 // Initializes all the required components
 void InitializeHardware(){
     InitializeMemory();

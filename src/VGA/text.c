@@ -185,6 +185,10 @@ char* ConvertUnSigned(uint32 number, uint8 base){
     return buffer;
 }
 
+int16 GetX(){
+    return currentX;
+}
+
 void printk(const char *str, ...){
     if(*str == '\0'){
         return;
