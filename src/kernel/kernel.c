@@ -9,7 +9,8 @@
 #include <pcspkr.h>
 
 // To update:
-// If a new file was added, do git add [filename]
+// Do git add [filename], or git add .
+// Do git commit -m "Say what you did"
 // To push, do git push -u origin main
 
 // Reference a small example for showcase
