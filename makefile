@@ -5,7 +5,7 @@ ARCH=i386
 
 # QEMU Arguments
 EMARGS=-m 4G -smp 1 -vga std -display sdl -serial stdio -drive file=build/main.iso,media=cdrom,if=ide
-EMARGS+=-drive file=bin/harddisk.vdi,format=raw,if=ide -boot d
+EMARGS+=-drive file=bin/harddisk.qcow2,format=raw,if=ide -boot d
 EMARGS+=-d cpu_reset -audiodev sdl,id=sdl,out.frequency=48000,out.channels=2,out.format=s32
 EMARGS+=-device sb16,audiodev=sdl -machine pcspk-audiodev=sdl
 

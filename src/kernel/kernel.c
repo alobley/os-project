@@ -8,6 +8,10 @@
 #include <fpu.h>
 #include <pcspkr.h>
 
+// To update:
+// If a new file was added, do git add [filename]
+// To push, do git push -u origin main
+
 // Reference a small example for showcase
 extern void LittleGame();
 
