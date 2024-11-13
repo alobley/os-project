@@ -15,23 +15,7 @@
 // To push, do git push -u origin main
 
 // Reference a small example for showcase
-extern void LittleGame();
-
-void ProcessCommand(const char* cmd){
-    if(strlen(cmd) == 0){
-        return;
-    }
-
-    if(strcmp(cmd, "game")){
-        LittleGame();
-    }else if(strcmp(cmd, "clear")){
-        ClearTerminal();
-    }else if(strcmp(cmd, "hi")){
-        printk("Hello!\n");
-    }else{
-        printk("Invalid Command!\n");
-    }
-}
+extern int CliHandler();
 
 // Initializes all the required components
 void InitializeHardware(){
@@ -47,51 +31,17 @@ void InitializeHardware(){
 // The kernel's main function
 void kernel_main(){
     InitializeHardware();
-    printk("Thanks for the GRUB!\n");
-    printk("Enter \"game\" into the console to play a game!\n");
 
-    //while(!IsKeyPressed(G) && !IsKeyPressed(ESC));
+    // Launch the shell
+    int value = CliHandler();
 
-    if(IsKeyPressed(G)){
-        LittleGame();
-    }
+    // Temporary solution since the shell is built-in. We shouldn't return from it.
+    printk("CRITICAL ERROR! Rebooting...\n");
 
-    // Allocate 1000 bytes for a command. That means a max of 1000 characters. Should be more than enough.
-    char* command = (char*)alloc(1000);
-    memset(command, 0, 1000);
+    Sleep(1000);
 
-    int index = 0;
-
-    printk("/ > ");
-    while(true){
-        uint8 lastKey = GetLastKey();
-        if(lastKey != 0){
-            switch (lastKey)
-            {
-                case '\b':
-                    index--;
-                    command[index] = 0;
-                    WriteStrSize(&lastKey, 1);
-                    break;
-
-                case '\n':
-                    printk("\n");
-                    ProcessCommand(command);
-                    memset(command, 0, 1000);
-                    index = 0;
-                    printk("/ > ");
-                    break;
-                
-                default:
-                    command[index] = lastKey;
-                    index++;
-                    WriteStrSize(&lastKey, 1);
-                    break;
-            }
-        }
-    }
-
-    dealloc(command);
+    asm volatile("lidt 0");
+    asm volatile("int $0x1");
 
     for(;;) asm("hlt");
 }

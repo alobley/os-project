@@ -186,9 +186,10 @@ char* ConvertUnSigned(uint32 number, uint8 base){
 }
 
 void printk(const char *str, ...){
-    if(str == '\0'){
+    if(*str == '\0'){
         return;
     }
+    
     va_list args;
     va_start(args, str);
 

@@ -37,7 +37,7 @@ LIBS=$(BUILD_DIR)/kernel_start.o $(INT_DIR)/isr.c $(INT_DIR)/idt.c $(INT_DIR)/ir
 LIBS+=$(LIB_DIR)/io.c $(LIB_DIR)/fpu.c $(VGA_DIR)/vga.c $(VGA_DIR)/pixel.c
 LIBS+=$(MEM_DIR)/alloc.c $(TIME_DIR)/time.c $(KB_DIR)/keyboard.c $(LIB_DIR)/math.c
 LIBS+=$(DISK_DIR)/ata.c $(DISK_DIR)/fat.c $(SOUND_DIR)/pcspkr.c $(VGA_DIR)/text.c
-LIBS+=$(KERNEL_DIR)/smallgame.c
+LIBS+=$(KERNEL_DIR)/smallgame.c $(KERNEL_DIR)/cli.c
 
 # Assembly and Kernel Files
 ASMFILE=boot
