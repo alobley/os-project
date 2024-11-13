@@ -12,6 +12,8 @@ EMARGS+=-device sb16,audiodev=sdl -machine pcspk-audiodev=sdl
 # Directories
 SRC_DIR=src
 BUILD_DIR=build
+BIN_DIR=bin
+MNT_DIR=mnt
 LIB_DIR=$(SRC_DIR)/lib
 INT_DIR=$(SRC_DIR)/interrupts
 VGA_DIR=$(SRC_DIR)/VGA
@@ -47,38 +49,38 @@ PROGRAM_FILE=programtoload
 # Build Targets
 all: assemble compile drive_image qemu
 
+create_dirs:
+	mkdir -p $(BUILD_DIR) $(BIN_DIR) $(MNT_DIR)
+
 # Create Boot Disk Image
-drive_image:
+drive_image: create_dirs
 	mkdir -p isodir/boot/grub
 	cp $(BUILD_DIR)/$(CFILE).bin isodir/boot/$(CFILE).bin
 	cp $(BOOT_DIR)/grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o build/main.iso isodir
 
 # Assemble Kernel Startup
-assemble:
+assemble: create_dirs
 	$(ASM) -felf32 $(KERNEL_DIR)/kernel_start.asm -o $(BUILD_DIR)/kernel_start.o
 
 # Compile Kernel
-compile: $(KERNEL_DIR)/$(CFILE).c
+compile: create_dirs $(KERNEL_DIR)/$(CFILE).c
 	$(CCOM) -o $(BUILD_DIR)/$(CFILE).bin $(KERNEL_DIR)/$(CFILE).c $(LIBS) $(CFLAGS)
 
 # Run QEMU
-qemu: $(BUILD_DIR)/main.iso
+qemu: create_dirs $(BUILD_DIR)/main.iso
 	qemu-system-$(ARCH) $(EMARGS)
 
 # Add Files to Virtual Disk
-addfiles:
-	mkdir -p mnt
+addfiles: create_dirs
 	sudo mount -o loop,rw bin/harddisk.qcow2 mnt
 	sudo cp $(BUILD_DIR)/prgm.bin mnt/prgm.bin
 	sync
-	sudo umount mnt
 
 # Create the Hard Drive Image
-hard_drive:
-	mkdir -p bin
-	qemu-img create -f qcow2 bin/harddisk.qcow2 2G
-	mkfs.fat -F 32 bin/harddisk.qcow2
+hard_drive: create_dirs
+	qemu-img create -f qcow2 $(BIN_DIR)/harddisk.qcow2 2G
+	mkfs.fat -F 32 $(BIN_DIR)/harddisk.qcow2
 
 # Clean Build Artifacts
 clean:
