@@ -8,6 +8,7 @@
 #include <fpu.h>
 #include <pcspkr.h>
 #include <string.h>
+#include <ata.h>
 
 // To update:
 // Do git add [filename], or git add .

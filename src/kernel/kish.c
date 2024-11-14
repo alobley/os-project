@@ -8,6 +8,7 @@
 #include <fpu.h>
 #include <pcspkr.h>
 #include <string.h>
+#include <ata.h>
 
 // Temporary CLI shell built into the kernel untill I get filesystem and ABI support
 
@@ -42,6 +43,31 @@ void ProcessCommand(const char* cmd){
         syscall(1, 2, 3, 4);
     }else if(strcmp(cmd, "help")){
         printk("game: runs a small game\nhi: say hello!\nreboot: reboots the machine\nshutdown: shuts down the computer (QEMU/Bochs only)\nsystest: execute a system call\nhelp: view this screen\n");
+    }else if(strcmp(cmd, "dskchk")){
+        disk_t* disks[MAX_DRIVES];
+        for(int i = 0; i < MAX_DRIVES; i++){
+            disks[i] = IdentifyDisk(i);
+            if(disks[i] != NULL){
+                printk("Disk found! Number: %d\n", disks[i]->driveNum);
+                printk("Disk Type: %d ", disks[i]->type);
+                if(disks[i]->type == PATADISK){
+                    printk("(PATA)\n");
+                }else if(disks[i]->type == PATAPIDISK){
+                    printk("(PATAPI)\n");
+                }else{
+                    printk("(UNKNOWN)\n");
+                }
+                printk("Disk size in sectors: %llu\n", disks[i]->size);
+                printk("Addressing: %d ", disks[i]->addressing);
+                if(disks[i]->addressing == CHS_ONLY){
+                    printk("(CHS only)\n");
+                }else if(disks[i]->type == LBA28){
+                    printk("(28-bit LBA)\n");
+                }else{
+                    printk("(48-bit LBA)\n");
+                }
+            }
+        }
     }else{
         printk("Invalid Command!\n");
     }

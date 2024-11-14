@@ -24,9 +24,9 @@ Currently, this project is still in the early stages. I've spent the past year l
 
 ## To-Do
 1. Comment and document the code. Both are very sparse.
-2. Learn how to use git and GitHub properly.
-3. Write an ATA and FAT driver for disk access.
-4. Write a system call interrupt and an ABI.
+2. Learn how to use git and GitHub properly. (done)
+3. Write an ATA and FAT driver for disk access. (working on it)
+4. Write a system call interrupt and an ABI. (working on it)
 
 ## Long-Term Goals
 5. Write a terminal application using my custom ABI.
