@@ -29,8 +29,6 @@ bool shiftPressed = false;
 void kb_handler(){
     uint8 scanCode = inb(KBD_DATA_PORT);
 
-    lastKeyPressed = 0;
-
     if(scanCode & EVENT_KEYUP){
         // On key release
         if((scanCode ^ EVENT_KEYUP) == LSHIFT || (scanCode ^ EVENT_KEYUP) == RSHIFT){

@@ -42,7 +42,14 @@ void ProcessCommand(const char* cmd){
     }else if(strcmp(cmd, "systest")){
         syscall(1, 2, 3, 4);
     }else if(strcmp(cmd, "help")){
-        printk("game: runs a small game\nhi: say hello!\nreboot: reboots the machine\nshutdown: shuts down the computer (QEMU/Bochs only)\nsystest: execute a system call\nhelp: view this screen\ndskchk: scans the system for PATA disks\n");
+        printk("game: runs a small game\n");
+        printk("hi: say hello!\n");
+        printk("systest: execute a system call\n");
+        printk("help: view this screen\n");
+        printk("dskchk: scans the system for PATA disks\n");
+        printk("clear: clears the terminal screen\n");
+        printk("reboot: reboots the machine\n");
+        printk("shutdown: shuts down the computer (QEMU/Bochs only)\n");
     }else if(strcmp(cmd, "dskchk")){
         disk_t* disks[MAX_DRIVES];
         for(int i = 0; i < MAX_DRIVES; i++){
@@ -83,14 +90,14 @@ int CliHandler(){
 
     int index = 0;
 
-    printk("KISh > ");
+    printk("KISh> ");
     while(true){
         uint8 lastKey = GetLastKey();
         if(lastKey != 0){
             switch (lastKey)
             {
                 case '\b':
-                    if(GetX() > 7){
+                    if(GetX() > 6){
                         index--;
                         command[index] = 0;
                         WriteStrSize(&lastKey, 1);
@@ -102,7 +109,7 @@ int CliHandler(){
                     ProcessCommand(command);
                     memset(command, 0, 1000);
                     index = 0;
-                    printk("KISh > ");
+                    printk("KISh> ");
                     break;
                 
                 default:
