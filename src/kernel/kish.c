@@ -42,7 +42,7 @@ void ProcessCommand(const char* cmd){
     }else if(strcmp(cmd, "systest")){
         syscall(1, 2, 3, 4);
     }else if(strcmp(cmd, "help")){
-        printk("game: runs a small game\nhi: say hello!\nreboot: reboots the machine\nshutdown: shuts down the computer (QEMU/Bochs only)\nsystest: execute a system call\nhelp: view this screen\n");
+        printk("game: runs a small game\nhi: say hello!\nreboot: reboots the machine\nshutdown: shuts down the computer (QEMU/Bochs only)\nsystest: execute a system call\nhelp: view this screen\ndskchk: scans the system for PATA disks\n");
     }else if(strcmp(cmd, "dskchk")){
         disk_t* disks[MAX_DRIVES];
         for(int i = 0; i < MAX_DRIVES; i++){
