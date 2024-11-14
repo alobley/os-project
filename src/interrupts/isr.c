@@ -55,8 +55,14 @@ extern void _isr46(struct Registers*);
 extern void _isr47(struct Registers*);
 extern void _isr48(struct Registers*);
 
-// Located in kernel.c
 extern void syscall_handler(struct Registers* regs);
+
+// This is what is processed when you perform an ABI call (int 0x30). It works!
+// Implementation at a later date
+void syscall_handler(struct Registers *regs){
+    printk("The system was called!\n");
+    printk("Syscall number: %d\n", regs->intNum);
+}
 
 static void (*stubs[NUM_ISRS])(struct Registers*) = {
     _isr0,

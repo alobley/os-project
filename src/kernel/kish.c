@@ -83,14 +83,14 @@ int CliHandler(){
 
     int index = 0;
 
-    printk("/ > ");
+    printk("KISh > ");
     while(true){
         uint8 lastKey = GetLastKey();
         if(lastKey != 0){
             switch (lastKey)
             {
                 case '\b':
-                    if(GetX() >= 5){
+                    if(GetX() > 7){
                         index--;
                         command[index] = 0;
                         WriteStrSize(&lastKey, 1);
@@ -102,7 +102,7 @@ int CliHandler(){
                     ProcessCommand(command);
                     memset(command, 0, 1000);
                     index = 0;
-                    printk("/ > ");
+                    printk("KISh > ");
                     break;
                 
                 default:
