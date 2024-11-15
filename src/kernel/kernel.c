@@ -10,7 +10,7 @@
 #include <string.h>
 #include <ata.h>
 
-#define MULTIBOOT_MAGIC 0x1BADB002
+#define MULTIBOOT_MAGIC 0x2BADB002
 
 // To update:
 // Do git add [filename], or git add .
@@ -51,10 +51,13 @@ void InitializeHardware(){
 
 // The kernel's main function
 void kernel_main(uintptr_t placeholder, uint32 magic){
+    if(magic != MULTIBOOT_MAGIC){
+        // There was a problem, reboot
+        reboot();
+    }
     InitializeHardware();
 
-    // See the memory address of the multiboot structure
-    printk("0x%x\n", placeholder);
+    printk("Multiboot structure location: 0x%x\n", placeholder);  // It's 0x10? That feels wrong... (update: that's because it is)
 
     // Launch the shell
     int value = CliHandler();

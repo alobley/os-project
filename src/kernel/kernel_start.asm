@@ -19,16 +19,17 @@ section .text
 global _start:function (_start.end - _start)
 _start:
     cli
+
     cld
 
     lgdt [gdtp]
 
-    mov ax, (gdt_data_segment - gdt_start)
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
+    mov dx, (gdt_data_segment - gdt_start)
+    mov ds, dx
+    mov es, dx
+    mov fs, dx
+    mov gs, dx
+    mov ss, dx
 
     mov esi, stack_begin
 .clear_stack:
@@ -42,8 +43,8 @@ _start:
     mov ebp, stack_begin
     cld
 
-    push ebx
-    mov eax, 0x1BADB002
+    ; These registers were carefully saved so they could be passed to the kernel
+    push ebx        ; WHY ARE YOU 0x10?!
     push eax
 
     call 0x8:kernel_main
