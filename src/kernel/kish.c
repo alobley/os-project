@@ -50,7 +50,7 @@ void ProcessCommand(const char* cmd){
         printk("help: view this screen\n");
         printk("dskchk: scans the system for PATA disks\n");
         printk("clear: clears the terminal screen\n");
-        printk("causex: intentionally cause an exception (debug)");
+        printk("causex: intentionally cause an exception (debug)\n");
         printk("reboot: reboots the machine\n");
         printk("shutdown: shuts down the computer (QEMU/Bochs only)\n");
     }else if(strcmp(cmd, "dskchk")){

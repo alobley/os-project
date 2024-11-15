@@ -53,7 +53,7 @@ void InitializeHardware(){
 void kernel_main(uint32 magic, uintptr_t placeholder){
     if(magic != MULTIBOOT_MAGIC){
         // There was a problem, reboot
-        reboot();
+        printk("WARNING: no multiboot magic number.\n");
     }
     InitializeHardware();
 
