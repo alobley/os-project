@@ -51,11 +51,10 @@ void InitializeHardware(){
 
 // The kernel's main function
 void kernel_main(uintptr_t placeholder, uint32 magic){
-    if(magic != MULTIBOOT_MAGIC){
-        // No multiboot means problems
-        reboot();
-    }
     InitializeHardware();
+
+    // See the memory address of the multiboot structure
+    printk("0x%x\n", placeholder);
 
     // Launch the shell
     int value = CliHandler();
