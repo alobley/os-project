@@ -18,7 +18,7 @@ extern void reboot();
 extern void shutdown();
 
 // Execute a syscall to see what happens
-void syscall(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx){
+void syscall(){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
 }
 
@@ -41,11 +41,11 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         reboot();
 
     }else if(strcmp(cmd, "shutdown")){
-
         shutdown();
-    }else if(strcmp(cmd, "systest")){
 
-        syscall(1, 2, 3, 4);
+    }else if(strcmp(cmd, "systest")){
+        syscall();
+
     }else if(strcmp(cmd, "help")){
         printk("game: runs a small game\n");
         printk("hi: say hello!\n");
@@ -59,32 +59,31 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         printk("shutdown: shuts down the computer (QEMU/Bochs only)\n");
 
     }else if(strcmp(cmd, "dskchk")){
-        disk_t* disks[MAX_DRIVES];
         for(int i = 0; i < MAX_DRIVES; i++){
-            disks[i] = IdentifyDisk(i);
-            if(disks[i] != NULL){
-                printk("Disk found! Number: %d\n", disks[i]->driveNum);
-                printk("Disk Type: %d ", disks[i]->type);
-                if(disks[i]->type == PATADISK){
+            disk_t* disk = IdentifyDisk(i);
+            if(disk != NULL){
+                printk("Disk found! Number: %d\n", disk->driveNum);
+                printk("Disk Type: %d ", disk->type);
+                if(disk->type == PATADISK){
                     printk("(PATA)\n");
-                    printk("Disk size in sectors: %u\n", disks[i]->size);
-                }else if(disks[i]->type == PATAPIDISK){
+                    printk("Disk size in sectors: %u\n", disk->size);
+                }else if(disk->type == PATAPIDISK){
                     printk("(PATAPI)\n");
-                        if(disks[i]->populated){
+                        if(disk->populated){
                         printk("Populated: YES\n");
-                        printk("Disk size in sectors: %u\n", disks[i]->size);
-                    }else if(!disks[i]->populated){
+                        printk("Disk size in sectors: %u\n", disk->size);
+                    }else if(!disk->populated){
                         printk("Populated: NO\n");
                     }
                 }else{
                     printk("(UNKNOWN)\n");
                 }
-                printk("Addressing: %d ", disks[i]->addressing);
-                if(disks[i]->addressing == CHS_ONLY){
+                printk("Addressing: %d ", disk->addressing);
+                if(disk->addressing == CHS_ONLY){
                     printk("(CHS only)\n");
-                }else if(disks[i]->addressing == LBA28){
+                }else if(disk->addressing == LBA28){
                     printk("(28-bit LBA)\n");
-                }else if(disks[i]->addressing == LBA48){
+                }else if(disk->addressing == LBA48){
                     printk("(48-bit LBA)\n");
                 }
                 printk("\n");
@@ -136,9 +135,12 @@ int CliHandler(mboot_info_t* multibootInfo){
                     break;
                 
                 default:
-                    command[index] = lastKey;
-                    index++;
-                    WriteStrSize(&lastKey, 1);
+                    if(index < 1000){
+                        // Just in case allocation wasn't enough, protect from a buffer overflow
+                        command[index] = lastKey;
+                        index++;
+                        WriteStrSize(&lastKey, 1);
+                    }
                     break;
             }
         }

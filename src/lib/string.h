@@ -13,13 +13,19 @@ static inline uint32 strlen(const char* string){
     return len;
 }
 
+// Apparently this is the opposite of the standard library implementation, which is honestly a crime.
+// It should return true if two strings are equal. I will die on this hill.
 static inline bool strcmp(const char* in1, const char* in2){
     int i;
-    if(strlen(in1) != strlen(in2)){
+    int len1 = strlen(in1);
+    int len2 = strlen(in2);
+
+    if(len1 != len2){
+        // If they aren't the same length, they aren't the same.
         return false;
     }
 
-    for(i = 0; i < strlen(in1); i++){
+    for(i = 0; i < len1; i++){
         if(in2[i] != in1[i]){
             // They are not the same
             return false;
