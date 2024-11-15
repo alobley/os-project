@@ -50,6 +50,7 @@ void ProcessCommand(const char* cmd){
         printk("help: view this screen\n");
         printk("dskchk: scans the system for PATA disks\n");
         printk("clear: clears the terminal screen\n");
+        printk("causex: intentionally cause an exception (debug)");
         printk("reboot: reboots the machine\n");
         printk("shutdown: shuts down the computer (QEMU/Bochs only)\n");
     }else if(strcmp(cmd, "dskchk")){
@@ -77,6 +78,9 @@ void ProcessCommand(const char* cmd){
                 }
             }
         }
+    }else if(strcmp(cmd, "causex")){
+        // Intentionally cause an exception
+        asm volatile("int $0x10");
     }else{
         printk("Invalid Command!\n");
     }
