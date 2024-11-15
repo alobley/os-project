@@ -120,6 +120,8 @@ void DetermineAddressing(disk_t* disk){
     }
 }
 
+
+// PATAPI has NOT been implemented yet in this! It needs to be implemented at some point.
 disk_t* IdentifyDisk(uint8 diskNum){
     disk_t* disk = (disk_t*)alloc(sizeof(disk_t));
     switch (diskNum){
