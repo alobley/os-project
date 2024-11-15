@@ -5,7 +5,7 @@ ARCH=i386
 
 # QEMU Arguments
 EMARGS=-m 4G -smp 1 -vga std -display gtk -drive file=build/main.iso,media=cdrom,if=ide
-EMARGS+=-drive file=bin/harddisk.qcow2,format=raw,if=ide -boot d
+EMARGS+=-drive file=bin/harddisk.vdi,format=raw,if=ide -boot d
 EMARGS+=-d cpu_reset -audiodev sdl,id=sdl,out.frequency=48000,out.channels=2,out.format=s32
 EMARGS+=-device sb16,audiodev=sdl -machine pcspk-audiodev=sdl
 
@@ -73,14 +73,14 @@ qemu: create_dirs $(BUILD_DIR)/main.iso
 
 # Add Files to Virtual Disk
 addfiles: create_dirs
-	sudo mount -o loop,rw bin/harddisk.qcow2 mnt
+	sudo mount -o loop,rw bin/harddisk.vdi mnt
 	sudo cp $(BUILD_DIR)/prgm.bin mnt/prgm.bin
 	sync
 
-# Create the Hard Drive Image
+# Create the Hard Drive Image, for some reason .qcow2 doesn't show sectors properly.
 hard_drive: create_dirs
-	qemu-img create -f qcow2 $(BIN_DIR)/harddisk.qcow2 2G
-	mkfs.fat -F 32 $(BIN_DIR)/harddisk.qcow2
+	qemu-img create -f raw $(BIN_DIR)/harddisk.vdi 2G
+	mkfs.fat -F 32 $(BIN_DIR)/harddisk.vdi
 
 # Clean Build Artifacts
 clean:

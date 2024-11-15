@@ -62,20 +62,27 @@ void ProcessCommand(const char* cmd){
                 printk("Disk Type: %d ", disks[i]->type);
                 if(disks[i]->type == PATADISK){
                     printk("(PATA)\n");
+                    printk("Disk size in sectors: %llu\n", disks[i]->size);
                 }else if(disks[i]->type == PATAPIDISK){
                     printk("(PATAPI)\n");
+                        if(disks[i]->populated){
+                        printk("Populated: YES\n");
+                        printk("Disk size in sectors: %llu\n", disks[i]->size);
+                    }else if(!disks[i]->populated){
+                        printk("Populated: NO\n");
+                    }
                 }else{
                     printk("(UNKNOWN)\n");
                 }
-                printk("Disk size in sectors: %llu\n", disks[i]->size);
                 printk("Addressing: %d ", disks[i]->addressing);
                 if(disks[i]->addressing == CHS_ONLY){
                     printk("(CHS only)\n");
-                }else if(disks[i]->type == LBA28){
+                }else if(disks[i]->addressing == LBA28){
                     printk("(28-bit LBA)\n");
-                }else{
+                }else if(disks[i]->addressing == LBA48){
                     printk("(48-bit LBA)\n");
                 }
+                printk("\n");
             }
         }
     }else if(strcmp(cmd, "causex")){

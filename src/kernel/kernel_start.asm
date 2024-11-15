@@ -57,11 +57,12 @@ _start:
 
 global ExecuteProgram
 ExecuteProgram:
-    mov eax, 4[esp]
-
+    ; Pretty simple. Retrieve the address of a program's main function (which was passed into this function) and jump to it.
+    pop eax
+    push .done
     jmp eax
-
-    ret
+.done:
+    ret     ; EAX should have the return value
 
 section .text.interrupts
 ALIGN 4
@@ -159,7 +160,7 @@ IsrCommon:
 
     push esp
     call ISRHandler
-    pop esp
+    pop eax
 
     pop gs
     pop fs
