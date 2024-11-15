@@ -19,6 +19,7 @@ typedef struct {
     uint32 reserved;
 } __attribute__((packed)) module_t;
 
+// The multiboot info structure passed to the kernel. Hardly used now, will be utilized more later.
 typedef struct MultibootInfo {
     // System information
     uint32 flags;           // Flags for which fields are valid
@@ -70,7 +71,7 @@ typedef struct MultibootInfo {
     // Advanced power management table
     uintptr_t apm_table;
 
-    // VESA BIOS Extensions
+    // VESA BIOS Extensions (these could be very helpful)
     uint32 vbeCtrlInfo;
     uint32 vbeModeInfo;
     uint16 vbeMode;

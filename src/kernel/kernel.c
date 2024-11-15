@@ -65,7 +65,7 @@ void kernel_main(uint32 magic, mboot_info_t* multibootInfo){
     // Temporary solution since the shell is built-in. We shouldn't return from it.
     printk("CRITICAL ERROR! Rebooting...\n");
 
-    Sleep(1000);
+    delay(1000);
 
     reboot();
 

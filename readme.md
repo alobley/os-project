@@ -5,6 +5,12 @@ This project is meant to be a lightweight 32-bit x86 operating system developed 
 ## Project Status
 Currently, this project is still in the early stages. I've spent the past year learning about x86 and I started with basically zero knowledge, including in C and assembly.
 
+## System Requirements
+- An i386 processor or newer
+- At least 5MB of RAM
+- A VGA-compatible display
+- PATA/PATAPI compatible storage
+
 ## Features
 - **Boot Process**:
   - Boots with GRUB
@@ -15,6 +21,7 @@ Currently, this project is still in the early stages. I've spent the past year l
 - **Hardware Support**:
   - Keyboard and timer ISRs mapped to the Programmable Interrupt Controller (PIC)
   - PC speaker initialization
+  - Very basic disk driver (currently incomplete)
 - **Graphics**:
   - VGA driver setup
 - **Kernel**:
@@ -23,18 +30,19 @@ Currently, this project is still in the early stages. I've spent the past year l
 
 
 ## To-Do
-1. Comment and document the code. Both are very sparse.
-2. Learn how to use git and GitHub properly. (done)
-3. Write an ATA and FAT driver for disk access. (working on it)
-4. Write a system call interrupt and an ABI. (working on it)
+- Comment and document the code. Both are very sparse.
+- Learn how to use git and GitHub properly. (done)
+- Write an ATA and FAT driver for disk access. (working on it)
+- Write a system call interrupt and an ABI. (working on it)
 
 ## Long-Term Goals
-5. Write a terminal application using my custom ABI.
-6. Implement paging and better memory allocation.
-7. Implement process management and multitasking.
-8. Add a userland and memory protection.
-9. Add USB support.
-10. Add milticore support.
+- Write a terminal application using my custom ABI.
+- Utilize the majority of the GRUB Multiboot info structure
+- Implement paging and better memory allocation.
+- Implement process management and multitasking.
+- Add a userland and memory protection.
+- Add USB support.
+- Add milticore support.
 
 ## Build & Run
 

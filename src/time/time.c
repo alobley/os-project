@@ -132,7 +132,7 @@ void RemoveTimerCallback(uint32 callbackNum){
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 // Stop execution for a specified number of milliseconds
-void Sleep(uint64 ms){
+void delay(uint64 ms){
     // Get the current time elapsed since the ISR was created
     uint64 currentTicks = GetTicks();
 

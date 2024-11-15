@@ -33,7 +33,7 @@ void PCSP_PlaySound(uint16 d){
 
 void PCSP_Beep(){
     PCSP_PlaySound(BEEP_TONE);
-    Sleep(10);
+    delay(10);
     PCSP_NoSound();
 }
 
