@@ -130,6 +130,7 @@ void reverse(char* str, int length){
 char* ConvertSigned(int32 number){
     // Allocate the maximum digit size (including negative sign and null terminator)
     char* buffer = (char* )alloc(11);
+    memset(buffer, 0, 11);
     int i = 0;
     bool isNegative = false;
 
@@ -164,6 +165,7 @@ char* ConvertSigned(int32 number){
 char* ConvertUnSigned(uint32 number, uint8 base){
     // Allocate the maximum digit size (including negative sign and null terminator)
     char* buffer = (char* )alloc(11);
+    memset(buffer, 0, 11);
     int i = 0;
 
     if(number == 0){
@@ -216,7 +218,7 @@ void printk(const char *str, ...){
                 }
                 dealloc(strnum);
                 index += len;
-            }else if(str[i] == 'l' && str[i + 1] == 'l' && str[i + 2] == 'u'){
+            }else if(str[i] == 'u'){
                 uint32 argVal = va_arg(args, uint32);
                 char* strnum = ConvertUnSigned(argVal, 10);
                 int len = strlen(strnum);
@@ -225,8 +227,6 @@ void printk(const char *str, ...){
                 }
                 dealloc(strnum);
                 index += len;
-                *(output + index + 1) = '\n';
-                i += 2;
             }else if(str[i] == 'x'){
                 uint32 argVal = va_arg(args, uint32);
                 char* strnum = ConvertUnSigned(argVal, 16);

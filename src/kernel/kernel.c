@@ -9,6 +9,7 @@
 #include <pcspkr.h>
 #include <string.h>
 #include <ata.h>
+#include <multiboot.h>
 
 #define MULTIBOOT_MAGIC 0x2BADB002
 
@@ -50,7 +51,7 @@ void InitializeHardware(){
 }
 
 // The kernel's main function
-void kernel_main(uint32 magic, uintptr_t placeholder){
+void kernel_main(uint32 magic, mboot_info_t* multibootInfo){
     if(magic != MULTIBOOT_MAGIC){
         // There was a problem, reboot
         printk("WARNING: no multiboot magic number.\n");
@@ -58,7 +59,7 @@ void kernel_main(uint32 magic, uintptr_t placeholder){
     InitializeHardware();
 
     // Launch the shell
-    int value = CliHandler();
+    int value = CliHandler(multibootInfo);
 
     // Temporary solution since the shell is built-in. We shouldn't return from it.
     printk("CRITICAL ERROR! Rebooting...\n");

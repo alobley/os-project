@@ -18,7 +18,6 @@ align 4
 section .text
 global _start:function (_start.end - _start)
 _start:
-    ; EBX is almost always 0x10000 right here
     cli
 
     cld
