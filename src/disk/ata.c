@@ -89,6 +89,7 @@ void CacheFlush(uint16 basePort){
 }
 
 void DetermineAddressing(disk_t* disk){
+    // Default to CHS
     disk->addressing = CHS_ONLY;
     if(disk->infoSector[83] & (1 << 10)){
         // LBA48 supported
@@ -102,12 +103,13 @@ void DetermineAddressing(disk_t* disk){
             disk->addressing = LBA28;
             disk->size = lba28Sectors;
         }else{
+            // The disk is truly CHS only
             // Get the size of the disk from the number of cylinders, the number of heads, and the number of sectors per track, respectively.
             uint64 chsSectors = disk->infoSector[9] * disk->infoSector[11] * disk->infoSector[13];
             disk->size = chsSectors;
         }
     }else{
-        // Get the number of 48-bit LBA sectors
+        // If 48-bit LBA, get the number of 48-bit LBA sectors
         uint64 lba48Sectors = (disk->infoSector[100] << 48) | (disk->infoSector[101] << 32) | (disk->infoSector[102] << 16) | (disk->infoSector[103]);
         if(lba48Sectors > 0){
             disk->size = lba48Sectors;
@@ -125,6 +127,7 @@ void DetermineAddressing(disk_t* disk){
 disk_t* IdentifyDisk(uint8 diskNum){
     disk_t* disk = (disk_t*)alloc(sizeof(disk_t));
     switch (diskNum){
+        // Enter disk information based on the disk number provided
         case 0:
             disk->driveNum = diskNum;
             disk->slave = false;

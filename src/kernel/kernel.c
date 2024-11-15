@@ -10,6 +10,8 @@
 #include <string.h>
 #include <ata.h>
 
+#define MULTIBOOT_MAGIC 0x1BADB002
+
 // To update:
 // Do git add [filename], or git add .
 // Do git commit -m "Say what you did"
@@ -48,7 +50,11 @@ void InitializeHardware(){
 }
 
 // The kernel's main function
-void kernel_main(){
+void kernel_main(uintptr_t placeholder, uint32 magic){
+    if(magic != MULTIBOOT_MAGIC){
+        // No multiboot means problems
+        reboot();
+    }
     InitializeHardware();
 
     // Launch the shell

@@ -38,8 +38,6 @@ _start:
     je .done
 
 .done:
-    pop ebx
-    pop eax
     mov esp, stack
     mov ebp, stack_begin
     cld
