@@ -55,7 +55,7 @@ extern void _isr46(struct Registers*);
 extern void _isr47(struct Registers*);
 extern void _isr48(struct Registers*);
 
-extern void syscall_handler(struct Registers* regs);
+//extern void syscall_handler(struct Registers* regs);
 
 // This is what is processed when you perform an ABI call (int 0x30). It works!
 // Implementation at a later date
@@ -187,8 +187,4 @@ void InitISR(){
     }
 
     InstallISR(SYSCALL_INT, syscall_handler);
-}
-
-void spurious(){
-    asm volatile("iret");
 }

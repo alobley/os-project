@@ -5,6 +5,7 @@
 #include <irq.h>
 #include <vga.h>
 #include <time.h>
+#include <util.h>
 
 #define KEYBOARD_ISR 0x21
 #define KEYBOARD_IRQ 1
@@ -27,7 +28,14 @@ bool shiftPressed = false;
 
 
 void kb_handler(){
-    uint8 scanCode = inb(KBD_DATA_PORT);
+    uint8 scanCode;
+    if(inb(KBD_STATUS_PORT) & 0x01){
+        // If there is anything to retrieve, retrieve it
+        scanCode = inb(KBD_DATA_PORT);
+    }else{
+        return;
+    }
+
 
     if(scanCode & EVENT_KEYUP){
         // On key release
@@ -59,29 +67,27 @@ void kb_handler(){
     outb(PIC_EOI, PIC_EOI);
 }
 
-// Get a PS/2 scancode (DEPRECATED)
-uint8 GetKey(){
-    // Get the keyboard scancode
-    uint8 scanCode = inb(KBD_DATA_PORT);
-
-    return scanCode;
-}
-
+// Find if a key was pressed or not
 bool IsKeyPressed(uint8 scanCode){
-    if(keysDown[scanCode]){
-        return true;
-    }else{
-        return false;
-    }
+    return keysDown[scanCode];
 }
 
-uint8 GetLastKey(){
+// Get the last key pressed
+uint8 GetKey(){
+    cli;                        // Prevent race conditions (real hardware test result)
     uint8 key = lastKeyPressed;
     lastKeyPressed = 0;
+    sti;
     return key;
 }
 
 void InitializeKeyboard(){
+    while (inb(KBD_STATUS_PORT) & 0x01) {
+        // Flush the keyboard's buffer
+        inb(KBD_DATA_PORT);
+    }
+
+    // Install the keyboard interrupt
     InstallISR(KEYBOARD_ISR, kb_handler);
     InstallIRQ(KEYBOARD_IRQ, kb_handler);
 }

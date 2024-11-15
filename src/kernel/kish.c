@@ -10,12 +10,13 @@
 #include <string.h>
 #include <ata.h>
 
-// Temporary CLI shell built into the kernel untill I get filesystem and ABI support
+// Very simple CLI shell built into the kernel until I get filesystem and ABI support
 
 extern void LittleGame();
 extern void reboot();
 extern void shutdown();
 
+// Execute a syscall to see what happens
 void syscall(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx){
     asm volatile("movl %0, %%edx" :: "Nd" (edx));
     asm volatile("movl %0, %%ecx" :: "Nd" (ecx));
@@ -24,6 +25,7 @@ void syscall(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
 }
 
+// The shell commands
 void ProcessCommand(const char* cmd){
     if(strlen(cmd) == 0){
         return;
@@ -92,7 +94,7 @@ int CliHandler(){
 
     printk("KISh> ");
     while(true){
-        uint8 lastKey = GetLastKey();
+        uint8 lastKey = GetKey();
         if(lastKey != 0){
             switch (lastKey)
             {

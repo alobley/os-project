@@ -134,6 +134,4 @@ bool IsKeyPressed(uint8 scanCode);
 
 void InitializeKeyboard();
 
-uint8 GetLastKey();
-
 #endif
