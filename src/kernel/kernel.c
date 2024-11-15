@@ -50,14 +50,12 @@ void InitializeHardware(){
 }
 
 // The kernel's main function
-void kernel_main(uintptr_t placeholder, uint32 magic){
+void kernel_main(uint32 magic, uintptr_t placeholder){
     if(magic != MULTIBOOT_MAGIC){
         // There was a problem, reboot
         reboot();
     }
     InitializeHardware();
-
-    printk("Multiboot structure location: 0x%x\n", placeholder);  // It's 0x10? That feels wrong... (update: that's because it is)
 
     // Launch the shell
     int value = CliHandler();

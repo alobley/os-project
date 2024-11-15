@@ -44,12 +44,16 @@ _start:
     mov ebp, stack_begin
     cld
 
-    ; These registers were carefully saved so they could be passed to the kernel
-    push ebx        ; WHY ARE YOU 0x10?!
+    push ebx
     push eax
+    push .end      ; I'll make my own call instruction!
 
-    call 0x8:kernel_main
+    ; For some reason using the call instruction will always, without fail, cause the first argument to be 0x10.
+    jmp 0x8:kernel_main
 .end:
+    cli
+    hlt
+    jmp .end
 
 global ExecuteProgram
 ExecuteProgram:
