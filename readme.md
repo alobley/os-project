@@ -10,6 +10,7 @@ Currently, this project is still in the early stages. I've spent the past year l
 - At least 5MB of RAM
 - A VGA-compatible display
 - PATA/PATAPI compatible storage
+- PS/2 keyboard
 
 ## Features
 - **Boot Process**:
