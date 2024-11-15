@@ -41,7 +41,6 @@ void shutdown(){
 
 // Initializes all the required components
 void InitializeHardware(){
-    InitializeMemory();
     InitIDT();
     InitISR();
     InitializeFPU();
@@ -54,8 +53,10 @@ void InitializeHardware(){
 void kernel_main(uint32 magic, mboot_info_t* multibootInfo){
     if(magic != MULTIBOOT_MAGIC){
         // There was a problem, reboot
-        printk("WARNING: no multiboot magic number.\n");
+        WriteStr("WARNING: no multiboot magic number.\n");
     }
+    // Dynamic memory achieved!
+    InitializeMemory((multibootInfo->memLower + multibootInfo->memUpper) * 1024);
     InitializeHardware();
 
     // Launch the shell

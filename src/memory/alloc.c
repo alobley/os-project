@@ -21,34 +21,9 @@ memory_block_t* kernel_heap;
 
 uint32 kernel_heap_end;
 
-uint32 memsize;
-
-// Return the total amount of memory in the system to the caller
-uint32 GetMemSize(){
-    return memsize;
-}
-
-// This function is useless. Detects memory from CMOS, but it only detects up to the 16-bit integer limit.
-uint32 MemDetect(){
-    uint32 total;
-    uint8 lowmem, midlow, midhigh, highmem;
-
-    outb(0x70, 0x30);
-    lowmem = inb(0x71);
-    midlow = inb(0x71);
-    midhigh = inb(0x71);
-    highmem = inb(0x71);
-
-    total = lowmem | (midlow << 8) | (midhigh << 16) | (highmem << 24);
-
-    printk("%llu\n", total);
-
-    return total;
-}
-
-void InitializeMemory(){
+void InitializeMemory(size_t memSize){
     // Set to 1 gigabyte for now (need to get the GRUB memory map)
-    KERNEL_FREE_HEAP_END = 1073741824;
+    KERNEL_FREE_HEAP_END = memSize;
     kernel_heap_end = __kernel_end;
 
     KERNEL_FREE_HEAP_BEGIN = __kernel_end;
@@ -57,8 +32,6 @@ void InitializeMemory(){
     kernel_heap->size = 0;
     kernel_heap->next = NULL;
     kernel_heap->free = true;
-
-    memsize = kernel_heap_end - __kernel_end;
 }
 
 // Allocate memory and return a pointer to it

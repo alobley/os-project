@@ -11,9 +11,6 @@ void dealloc(void* ptr);
 //void PANIC_FREE_HEAP();
 
 // Initialize the kernel's memory heap
-void InitializeMemory();
-
-// Doesn't work
-uint32 GetMemSize();
+void InitializeMemory(size_t memSize);
 
 #endif
