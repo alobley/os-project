@@ -4,7 +4,7 @@ CCOM=i686-elf-gcc
 ARCH=i386
 
 # QEMU Arguments
-EMARGS=-m 2G -smp 1 -vga std -display gtk -drive file=build/main.iso,media=cdrom,if=ide
+EMARGS=-m 5M -smp 1 -vga std -display gtk -drive file=build/main.iso,media=cdrom,if=ide
 EMARGS+=-drive file=bin/harddisk.vdi,format=raw,if=ide -boot d
 EMARGS+=-d cpu_reset -audiodev sdl,id=sdl,out.frequency=48000,out.channels=2,out.format=s32
 EMARGS+=-device sb16,audiodev=sdl -machine pcspk-audiodev=sdl
@@ -24,6 +24,7 @@ TIME_DIR=$(SRC_DIR)/time
 KB_DIR=$(SRC_DIR)/keyboard
 DISK_DIR=$(SRC_DIR)/disk
 SOUND_DIR=$(SRC_DIR)/sound
+PROG_DIR=$(SRC_DIR)/programs
 
 # Include Directories
 INCLUDES=-I $(SRC_DIR) -I $(LIB_DIR) -I $(INT_DIR) -I $(VGA_DIR) -I $(BOOT_DIR)
@@ -47,7 +48,7 @@ CFILE=kernel
 PROGRAM_FILE=programtoload
 
 # Build Targets
-all: assemble compile drive_image qemu
+all: assemble compile drive_image addfiles qemu
 
 create_dirs:
 	mkdir -p $(BUILD_DIR) $(BIN_DIR) $(MNT_DIR)
@@ -62,6 +63,7 @@ drive_image: create_dirs
 # Assemble Kernel Startup
 assemble: create_dirs
 	$(ASM) -felf32 $(KERNEL_DIR)/kernel_start.asm -o $(BUILD_DIR)/kernel_start.o
+	$(ASM) -fbin $(PROG_DIR)/prgm.asm -o $(BUILD_DIR)/prgm.bin
 
 # Compile Kernel
 compile: create_dirs $(KERNEL_DIR)/$(CFILE).c
@@ -75,6 +77,7 @@ qemu: create_dirs $(BUILD_DIR)/main.iso
 addfiles: create_dirs
 	sudo mount -o loop,rw bin/harddisk.vdi mnt
 	sudo cp $(BUILD_DIR)/prgm.bin mnt/prgm.bin
+	sudo umount mnt
 	sync
 
 # Create the Hard Drive Image, for some reason .qcow2 doesn't show sectors properly.

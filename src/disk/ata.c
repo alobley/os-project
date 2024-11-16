@@ -27,6 +27,13 @@
 #define COMMAND_IDENTIFY 0xEC
 #define COMMAND_IDENTIFY_PACKET 0xA1
 #define COMMAND_PACKET 0xA0
+#define COMMAND_READ_MULTIPLE 0xC4
+#define COMMAND_WRITE_MULTIPLE 0xC5
+#define COMMAND_SET_MULTIPLE 0xC6
+#define COMMAND_READ_SECTORS 0x20
+#define COMMAND_READ_SECTORS_EXT 0x24
+#define COMMAND_WRITE_SECTORS 0x30
+#define COMMAND_WRITE_SECTORS_EXT 0x34
 
 #define MASTER_DRIVE 0xA0
 #define SLAVE_DRIVE 0xB0
@@ -35,14 +42,52 @@
 
 // These macros get ATA ports based on a given base
 #define DataPort(basePort) basePort             // The data port is the base port, but this makes things more readable.
-#define FeaturesPort(basePort) (basePort + 1)
-#define SectorCount(basePort) (basePort + 2)
-#define LbaLo(basePort) (basePort + 3)
-#define LbaMid(basePort) (basePort + 4)
-#define LbaHi(basePort) (basePort + 5)
-#define DriveSelect(basePort) (basePort + 6)    // Drive select port
+#define FeaturesPort(basePort) (basePort + 1)   // Features register (write)
+#define ErrorPort(basePort) (basePort + 1)      // Error register (read)
+#define SectorCount(basePort) (basePort + 2)    // The amount of sectors to read/write (read/write)
+#define LbaLo(basePort) (basePort + 3)          // First (little-endian) part of the LBA address (read/write)
+#define LbaMid(basePort) (basePort + 4)         // Second part of the LBA address (read/write)
+#define LbaHi(basePort) (basePort + 5)          // Third part of the LBA address (read/write)
+#define DriveSelect(basePort) (basePort + 6)    // Drive/Head select port
 #define CmdPort(basePort) (basePort + 7)        // Write-Only
 #define StatusPort(basePort) (basePort + 7)     // Read-Only
+
+#define AltStatus(ctrlPort) (ctrlPort)          // Alternate status register. Reading from the control port will get this.
+#define DriveAddress(ctrlPort) (ctrlPort + 1)   // The drive address reguster, readonly
+
+// Flags from the error register (read)
+#define ERR_AMNF (1 << 0)                       // Address mark not found
+#define ERR_TZNF (1 << 1)                       // Track zero not found
+#define ERR_ABRT (1 << 2)                       // Aborted command
+#define ERR_MCR (1 << 3)                        // Media change request
+#define ERR_IDNF (1 << 4)                       // ID not found
+#define ERR_MC (1 << 5)                         // Media Changed
+#define ERR_UNC (1 << 6)                        // Uncorrectable data error
+#define ERR_BBLK (1 << 7)                       // Bad block
+
+// Flags from the status register (read)
+#define FLG_ERR (1 << 0)                        // Error
+#define FLG_IDX (1 << 1)                        // Index (always 0)
+#define FLG_CORR (1 << 2)                       // Corrected data (always 0)
+#define FLG_DRQ (1 << 3)                        // Data request. When the drive is ready for PIO data transfer in or out
+#define FLG_SRV (1 << 4)                        // Overlapped mode service request
+#define FLG_DF (1 << 5)                         // Drive fault error (does not set the ERR flag)
+#define FLG_RDY (1 << 6)                        // Defice is ready
+#define FLG_BSY (1 << 7)                        // Device is busy. If it doesn't clear, a software reset is a good idea
+
+
+// Commands to send to the device control register (write)
+#define CMD_NOINT (1 << 1)                      // Disable interrupt generation
+#define CMD_SRST (1 << 2)                       // Software reset (set, wait 5 nanoseconds, clear)
+#define CMD_HOB (1 << 7)                        // Set to read back the high order byte of the last lba48 value sent to an IO port (so basically useless)
+
+
+// Flags from the drive address register (read)
+#define FLG_DS0 (1 << 0)                        // 0 when drive 0 is selected, 1 when drive 1 is selected
+#define FLG_DS1 (1 << 1)                        // 0 when drive 1 is selected, 1 when drive 0 is selected
+#define FLG_HS (0b111 << 5)                     // NOT(currently selected head) <--- why one's complement?
+#define FLG_WTG (1 << 6)                        // Write gate, 0 when writing to the drive
+#define FLOPPY_RESERVED (1 << 7)                // Reserved for floppy disks
 
 
 // Get the control register of a given base
@@ -62,7 +107,7 @@ uint16 GetCtrl(uint16 basePort){
     }
 }
 
-// Read from the control register 15 times after selecting a device.
+// Read from the control register 15 times for a 400ns delay
 void DiskDelay(uint16 BasePort){
     for(int i = 0; i < 15; i++){
         inb(GetCtrl(BasePort));
@@ -71,24 +116,42 @@ void DiskDelay(uint16 BasePort){
 
 // Checks if the disk is running a command by checking the BSY bit
 bool IsBusy(uint16 basePort){
-    return inb(StatusPort(basePort)) & 0x80;
+    return inb(StatusPort(basePort)) & FLG_BSY;
 }
 
 // Wait for the BSY bit to clear so the next command can be sent
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 void WaitForIdle(uint16 basePort){
-    while(inb(StatusPort(basePort)) & 0x80);
+    while(inb(StatusPort(basePort)) & FLG_BSY);
 }
 
 void WaitForDrq(uint16 basePort){
-    while(inb(StatusPort(basePort)) & 0x08 != 0x08);
+    while(inb(StatusPort(basePort)) & FLG_DRQ != FLG_DRQ);
 }
 #pragma GCC pop_options
 
 // Flush the disk cache, should be done after every write command
 void CacheFlush(uint16 basePort){
     outb(basePort, COMMAND_FLUSH_CACHE);
+}
+
+// Perform a soft reset on a given disk
+void SoftwareReset(disk_t* disk){
+    outb(disk->ctrl, CMD_SRST);
+    DiskDelay(disk->base);
+}
+
+
+void SelectDisk(disk_t* disk){
+    // Select the master or slave depending on the drive
+    if(disk->slave){
+        outb(DriveSelect(disk->base), SLAVE_DRIVE);
+    }else{
+        outb(DriveSelect(disk->base), MASTER_DRIVE);
+    }
+
+    DiskDelay(disk->base);
 }
 
 void DetermineAddressing(disk_t* disk){
@@ -178,6 +241,7 @@ void DetermineAddressing(disk_t* disk){
                 disk->size = maxLba;
                 disk->sectorSize = 0;
             }else{
+                // There is an inserted disk
                 disk->populated = true;
                 disk->size = maxLba + 1;
                 disk->sectorSize = sectorSize;
@@ -256,14 +320,10 @@ disk_t* IdentifyDisk(uint8 diskNum){
         return NULL;
     }
 
-    // Select the master or slave depending on the drive
-    if(disk->slave){
-        outb(DriveSelect(disk->base), SLAVE_DRIVE);
-    }else{
-        outb(DriveSelect(disk->base), MASTER_DRIVE);
-    }
+    SelectDisk(disk);
 
-    DiskDelay(disk->base);
+    // Set the control register to 0
+    outb(disk->ctrl, 0);
 
     outb(SectorCount(disk->base), 0);
     outb(LbaLo(disk->base), 0);
@@ -312,7 +372,7 @@ disk_t* IdentifyDisk(uint8 diskNum){
     uint8 status = inb(StatusPort(disk->base));
     while(!(status & 0x08)){
         // Wait until DRQ is ready
-        if(status & 0x01){
+        if(status & FLG_ERR){
             // There was an error, the disk cannot be used
             dealloc(disk);
             return NULL;
@@ -333,4 +393,113 @@ disk_t* IdentifyDisk(uint8 diskNum){
     DetermineAddressing(disk);
 
     return disk;
+}
+
+// Note: partition-relative LBA implementation may be a good idea
+uint16* ReadSectors(disk_t* disk, uint16 sectorsToRead /*For LBA28 only the low byte is used*/, uint64 lba){
+    if(disk->populated || !disk->removable){
+        // If the disk exists, we can read from it
+        // Select the master or slave depending on the drive
+        if(disk->slave){
+            if(disk->addressing == LBA28){
+                sectorsToRead = (uint8)sectorsToRead;
+                outb(DriveSelect(disk->base), SLAVE_DRIVE | (((uint32)lba >> 24) & 0x0F));
+            }else if(disk->addressing == LBA48){
+                // This is shockingly different
+                outb(DriveSelect(disk->base), 0x50);
+            }else{
+                // Convert CHS to LBA28
+            }
+        }else{
+            if(disk->addressing == LBA28){
+                sectorsToRead = (uint8)sectorsToRead;
+                outb(DriveSelect(disk->base), MASTER_DRIVE | (((uint32)lba >> 24) & 0x0F));
+            }else if(disk->addressing == LBA48){
+                // This is shockingly different
+                outb(DriveSelect(disk->base), 0x40);
+            }else{
+                // Convert CHS to LBA28
+            }
+        }
+        DiskDelay(disk->base);
+    }else{
+        // If it doesn't, there's nothing to read.
+        return NULL;
+    }
+
+    // Allocate the buffer that the data will be sent to
+    uint16* buffer = alloc(sectorsToRead * disk->sectorSize);
+
+    if(disk->addressing == LBA28){
+        lba = (uint32)lba;
+        outb(FeaturesPort(disk->base), 0x00);
+        outb(SectorCount(disk->base), sectorsToRead);
+        outb(LbaLo(disk->base), (uint8)lba & 0xFF);
+        outb(LbaMid(disk->base), ((uint8)(lba >> 8) & 0xFF));
+        outb(LbaHi(disk->base), ((uint8)(lba >> 16) & 0xFF));
+
+        WaitForIdle(disk->base);
+        outb(CmdPort(disk->base), COMMAND_READ_SECTORS);
+        for(int i = 0; i < 4; i++){
+            inb(ErrorPort(disk->base));
+        }
+        WaitForDrq(disk->base);
+
+        for(int sector = 0; sector < sectorsToRead; sector++){
+            WaitForIdle(disk->base);
+            WaitForDrq(disk->base);
+            for(int i = 0; i < 4; i++){
+                inb(ErrorPort(disk->base));
+            }
+            for(int i = 0; i < 256; i++){
+                // Read the sector
+                buffer[sector * 256 + i] = inw(DataPort(disk->base));
+            }
+        }
+
+        // This is technically twice as long as it needs to be
+        DiskDelay(disk->base);
+    }else if(disk->addressing == LBA48){
+        if(sectorsToRead == 0){
+            // Very, very large amount of data
+            dealloc(buffer);
+            buffer = alloc(65536);
+        }
+        WaitForIdle(disk->base);
+
+        // Send the high bytes
+        outb(SectorCount(disk->base), (sectorsToRead >> 8) & 0xFF);
+        outb(LbaLo(disk->base), (lba >> 24) & 0xFF);
+        outb(LbaMid(disk->base), (lba >> 32) & 0xFF);
+        outb(LbaHi(disk->base), (lba >> 40) & 0xFF);
+
+        // Send the low bytes
+        outb(SectorCount(disk->base), sectorsToRead & 0xFF);
+        outb(LbaLo(disk->base), lba & 0xFF);
+        outb(LbaMid(disk->base), (lba >> 8) & 0xFF);
+        outb(LbaHi(disk->base), (lba >> 16) & 0xFF);
+
+        WaitForIdle(disk->base);
+        outb(CmdPort(disk->base), COMMAND_READ_SECTORS_EXT);
+
+        for(int i = 0; i < 4; i++){
+            inb(ErrorPort(disk->base));
+        }
+
+        // Wait for the drive to indicate it's ready to transfer data
+        WaitForDrq(disk->base);
+
+        for(int sector = 0; sector < sectorsToRead; sector++){
+            WaitForIdle(disk->base);
+            WaitForDrq(disk->base);
+            for(int i = 0; i < 256; i++){
+                // Read the sector
+                buffer[sector * 256 + i] = inw(DataPort(disk->base));
+            }
+        }
+    }else{
+        // Translate CHS to LBA
+    }
+
+    return buffer;
 }

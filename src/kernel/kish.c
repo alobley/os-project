@@ -10,16 +10,43 @@
 #include <string.h>
 #include <ata.h>
 #include <multiboot.h>
+#include <fat.h>
 
 // Very simple CLI shell built into the kernel until I get filesystem and ABI support
 
 extern void LittleGame();
 extern void reboot();
 extern void shutdown();
+extern const disk_t* disks[MAX_DRIVES];
 
 // Execute a syscall to see what happens
 void syscall(){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
+}
+
+void FindBootsect(){
+    bpb_t* bpb;
+    for(int disk = 0; disk < MAX_DRIVES; disk++){
+        if(disks[disk]->type == PATADISK){
+            if(disks[disk]->addressing == LBA48){
+                bpb = ReadSectors(disks[disk], 1, 1);
+            }else{
+                bpb = ReadSectors(disks[disk], 1, 0);
+            }
+        }
+    }
+
+    if(bpb == NULL){
+        printk("Couldn't find a compatible disk!\n");
+    }else{
+        if (bpb->ebr.ebr_type.fat32.bootSig == 0xAA55) {
+            printk("Bootsector located! Signature: 0x%x\n", bpb->ebr.ebr_type.fat32.bootSig);
+        } else if (bpb->ebr.ebr_type.fat1216.bootSig == 0xAA55) {
+            printk("Bootsector located! Signature: 0x%x\n", bpb->ebr.ebr_type.fat1216.bootSig);
+        }else{
+            printk("No bootsector on this disk!\n");
+        }
+    }
 }
 
 // The shell commands
@@ -53,6 +80,7 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         printk("help: view this screen\n");
         printk("dskchk: scans the system for PATA disks\n");
         printk("memsize: get the total system RAM in bytes\n");
+        printk("readtest: tests the disk driver by locating the boot signature of a PATA disk\n");
         printk("clear: clears the terminal screen\n");
         printk("fault: intentionally cause an exception (debug)\n");
         printk("reboot: reboots the machine\n");
@@ -60,7 +88,7 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
 
     }else if(strcmp(cmd, "dskchk")){
         for(int i = 0; i < MAX_DRIVES; i++){
-            disk_t* disk = IdentifyDisk(i);
+            disk_t* disk = disks[i];
             if(disk != NULL){
                 printk("Disk found! Number: %d\n", disk->driveNum);
                 printk("Disk Type: %d ", disk->type);
@@ -95,7 +123,10 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         asm volatile("int $0x08");
 
     }else if(strcmp(cmd, "memsize")){
-        printk("Total memory: %u MB\n", (multibootInfo->memLower + multibootInfo->memUpper) / 1024);
+        printk("Total memory: %u MB\n", (multibootInfo->memLower + multibootInfo->memUpper + 1024) / 1024);
+
+    }else if (strcmp(cmd, "readtest")){
+        FindBootsect();
 
     }else{
         printk("Invalid Command!\n");

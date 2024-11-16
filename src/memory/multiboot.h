@@ -2,6 +2,7 @@
 #define MULTIBOOT_H
 
 #include <types.h>
+#include <util.h>
 
 // File written by alobley, the author of this project. This is under the MIT license.
 
@@ -10,14 +11,14 @@ typedef struct MemoryMap {
     uint64 baseAddr;
     uint64 length;
     uint32 type;        // The type of memory in the region, e.g. available, reserved
-} __attribute__((packed)) mboot_mmap_t;
+} PACKED mboot_mmap_t;
 
 typedef struct {
     uintptr_t modStart;     // Module starting address
     uintptr_t modEnd;       // Module ending address
     char* string;           // String describing the module
     uint32 reserved;
-} __attribute__((packed)) module_t;
+} PACKED module_t;
 
 // The multiboot info structure passed to the kernel. Hardly used now, will be utilized more later.
 typedef struct MultibootInfo {
@@ -87,7 +88,7 @@ typedef struct MultibootInfo {
     uint8 framebufferBpp;
     uint8 framebufferType;
     uint8 colorInfo[6];
-} __attribute__((packed)) mboot_info_t;
+} PACKED mboot_info_t;
 
 
 #endif

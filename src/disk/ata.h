@@ -39,5 +39,7 @@ typedef struct ataDisk {
 } PACKED disk_t;
 
 disk_t* IdentifyDisk(uint8 diskNum);
+void SoftwareReset(disk_t* disk);
+uint16* ReadSectors(disk_t* disk, uint16 sectorsToRead /*For LBA28 only the low byte is used*/, uint64 lba);
 
 #endif

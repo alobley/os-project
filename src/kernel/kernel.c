@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ata.h>
 #include <multiboot.h>
+#include <fat.h>
 
 #define MULTIBOOT_MAGIC 0x2BADB002
 
@@ -39,6 +40,9 @@ void shutdown(){
     outw(0xB004, 0x2000);
 }
 
+// An array of pointers to all the ATA disks
+const disk_t* disks[MAX_DRIVES];
+
 // Initializes all the required components
 void InitializeHardware(){
     InitIDT();
@@ -47,6 +51,9 @@ void InitializeHardware(){
     InitIRQ();
     InitializePIT();
     InitializeKeyboard();
+    for(int disk = 0; disk < MAX_DRIVES; disk++){
+        disks[disk] = IdentifyDisk(disk);
+    }
 }
 
 // The kernel's main function
@@ -56,7 +63,7 @@ void kernel_main(uint32 magic, mboot_info_t* multibootInfo){
         WriteStr("WARNING: no multiboot magic number.\n");
     }
     // Dynamic memory achieved!
-    InitializeMemory((multibootInfo->memLower + multibootInfo->memUpper) * 1024);
+    InitializeMemory((multibootInfo->memLower + multibootInfo->memUpper + 1024) * 1024);
     InitializeHardware();
 
     // Launch the shell

@@ -60,8 +60,12 @@ extern void _isr48(struct Registers*);
 // This is what is processed when you perform an ABI call (int 0x30). It works!
 // Implementation at a later date
 void syscall_handler(struct Registers *regs){
-    printk("The system was called!\n");
-    printk("Syscall number: %d\n", regs->intNum);
+    if(regs->eax == 0x01){
+        printk("Debug!\n");
+    }else{
+        printk("The system was called!\n");
+        printk("Syscall number: %d\n", regs->intNum);
+    }
 }
 
 static void (*stubs[NUM_ISRS])(struct Registers*) = {
