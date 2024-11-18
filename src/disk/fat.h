@@ -9,6 +9,7 @@
 #define FS_FAT16 1
 #define FS_FAT32 2
 #define FS_EXFAT 3
+#define FS_UNSUPPORTED 0xFF
 
 #define VALID_FSINFO_LEAD 0x41615252
 #define VALID_FSINFO_MID 0x61417272
@@ -24,7 +25,7 @@ typedef struct PACKED Extended_Boot_Record {
             uint8 signature;            // Must be 0x28 or 0x29
             uint32 serialNum;           // Volume serial number
             char volumeLabel[11];       // The name of this disk
-            char fsType[8];             // String representation of the type of FAT filesystem. Apparently Microsoft says to never trust this.
+            char fsType[8];             // String representation of the type of FAT filesystem. Apparently I shouldn't ever trust this.
             uint8 bootCode[448];        // The bootloader on this disk, if there is one
             uint16 bootSig;             // The boot signature. Is 0xAA55.
         } fat1216;
@@ -76,7 +77,7 @@ typedef struct PACKED Filesystem_Info {
     uint32 trailSig;                // The trail signature. Must be 0xAA550000 to be a valid fsinfo structure.
 } fsinfo_t;
 
-// exFAT completely redesigned the boot record
+// exFAT completely redesigned the boot record (currently unsupported, implement later)
 typedef struct PACKED exFAT_Boot_Record {
     uint8 jmpnop[3];
     char oemId[8];                  // Usually contains "EXFAT" but should not be trusted
@@ -84,7 +85,7 @@ typedef struct PACKED exFAT_Boot_Record {
     uint64 partitionOffset;         // LBA offset for the start of this partition.
     uint64 volumeLength;
     uint32 fatOffset;               // FAT offset in sectors from the start of the partition
-    uint32 fatLength;               // FAt length in sectors
+    uint32 fatLength;               // FAT length in sectors
     uint32 clusterHeap;             // Cluster heap offset in sectors
     uint32 clusterCount;            // The total amount of clusters
     uint32 rootCluster;             // Root directory cluster
@@ -183,6 +184,6 @@ typedef struct PACKED exFAT_file {
 } exfat_file_t;
 
 
-fat_disk_t* ParseFilesystem(disk_t* disk, bpb_t* bpb);
+fat_disk_t* ParseFilesystem(disk_t* disk);
 
 #endif

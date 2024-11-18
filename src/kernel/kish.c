@@ -17,13 +17,14 @@
 extern void LittleGame();
 extern void reboot();
 extern void shutdown();
-extern const disk_t* disks[MAX_DRIVES];
+extern disk_t* disks[MAX_DRIVES];
 
 // Execute a syscall to see what happens
 void syscall(){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
 }
 
+/* This works flawlessly:
 void FindBootsect(){
     bpb_t* bpb;
     for(int disk = 0; disk < MAX_DRIVES; disk++){
@@ -46,6 +47,27 @@ void FindBootsect(){
         }else{
             printk("No bootsector on this disk!\n");
         }
+    }
+}
+*/
+
+// But this does not:
+void FindBootsect(){
+    fat_disk_t* fatdisk;
+    for(int disk = 0; disk < MAX_DRIVES; disk++){
+        fatdisk = ParseFilesystem(disks[disk]);
+    }
+
+    if(fatdisk->type == FS_UNSUPPORTED){
+        printk("Couldn't find a compatible disk!\n");
+    }else if(fatdisk->type == FS_FAT12){
+        printk("FAT12 disk found!\n");
+    }else if(fatdisk->type == FS_FAT16){
+        printk("FAT16 disk found!\n");
+    }else if(fatdisk->type == FS_FAT32){
+        printk("FAT32 disk found!\n");
+    }else{
+        printk("exFAT disk found!\n");
     }
 }
 

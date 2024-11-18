@@ -41,7 +41,7 @@ void shutdown(){
 }
 
 // An array of pointers to all the ATA disks
-const disk_t* disks[MAX_DRIVES];
+disk_t* disks[MAX_DRIVES];
 
 // Initializes all the required components
 void InitializeHardware(){

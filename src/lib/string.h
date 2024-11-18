@@ -36,4 +36,21 @@ static inline bool strcmp(const char* in1, const char* in2){
     return true;
 }
 
+
+static inline bool strncmp(const char* in1, const char* in2, int term){
+    for(int i = 0; i < term; i++){
+        if(in1[i] == '\0' && in2[i] == '\0'){
+            return true;
+        }
+        
+        if(in2[i] != in1[i] || in1[i] == '\0' || in2[i] == '\0'){
+            // Check failed
+            return false;
+        }
+    }
+
+    // Up to the given point, they are the same
+    return true;
+}
+
 #endif
