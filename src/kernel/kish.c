@@ -55,11 +55,13 @@ void FindBootsect(){
 void FindBootsect(){
     fat_disk_t* fatdisk;
     for(int disk = 0; disk < MAX_DRIVES; disk++){
-        fatdisk = ParseFilesystem(disks[disk]);
+        if(fatdisk->parent->type == PATADISK){
+            fatdisk = ParseFilesystem(disks[disk]);
+        }
     }
 
     if(fatdisk->type == FS_UNSUPPORTED){
-        printk("Couldn't find a compatible disk!\n");
+        printk("Non-FAT disk!\n");
     }else if(fatdisk->type == FS_FAT12){
         printk("FAT12 disk found!\n");
     }else if(fatdisk->type == FS_FAT16){

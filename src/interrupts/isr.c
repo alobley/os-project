@@ -2,6 +2,7 @@
 #include "idt.h"
 #include <vga.h>
 #include <util.h>
+#include <time.h>
 
 #define NUM_ISRS 49
 
@@ -64,7 +65,7 @@ void syscall_handler(struct Registers *regs){
         printk("Debug!\n");
     }else{
         printk("The system was called!\n");
-        printk("Syscall number: %d\n", regs->intNum);
+        printk("Syscall Number: %d\n", regs->eax);
     }
 }
 
@@ -170,13 +171,12 @@ void ISRHandler(struct Registers *regs){
     }
 }
 
+extern void reboot();
 static void ExceptionHandler(struct Registers *regs){
     ClearTerminal();
     printk(exceptions[regs->intNum]);
     cli;
-    for(;;){
-        hlt;
-    }
+    for(;;) hlt;
 }
 
 void InitISR(){
