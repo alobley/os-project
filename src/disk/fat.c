@@ -6,16 +6,12 @@
 
 // Why doesn't this work? It doesn't make sense.
 fat_disk_t* ParseFilesystem(disk_t* disk){
-    bpb_t* bpb = NULL;
-    if(disk->type == PATADISK){
-        if(disk->addressing == LBA48){
-            bpb = (bpb_t*)ReadSectors(disk, 1, 1);
-        }else{
-            bpb = (bpb_t*)ReadSectors(disk, 1, 0);
-        }
-    }else{
+    if(disk == NULL){
         return NULL;
     }
+    
+    bpb_t* bpb = NULL;
+    bpb = (bpb_t*)ReadSectors(disk, 1, 0);
 
     fat_disk_t* fatDisk = (fat_disk_t*)alloc(sizeof(fat_disk_t));
     fatDisk->parent = disk;
@@ -50,15 +46,14 @@ fat_disk_t* ParseFilesystem(disk_t* disk){
         fatDisk->totalClusters = 0;
     }
 
-    if(bpb->bytesPerSector == 0){
-        //fatDisk->type = FS_EXFAT;
-        fatDisk->type = FS_UNSUPPORTED;
-    }else if(fatDisk->totalClusters < 4085){
-        fatDisk->type = FS_FAT12;
-    }else if(fatDisk->totalClusters < 65525){
-        fatDisk->type = FS_FAT16;
+    if(strncmp(bpb->ebr.ebr_type.fat32.systemID, "FAT32", 5)){
+        fatDisk->fstype = FS_FAT32;
+    }else if(strncmp(bpb->ebr.ebr_type.fat1216.fsType, "FAT12", 5)){
+        fatDisk->fstype = FS_FAT12;
+    }else if(strncmp(bpb->ebr.ebr_type.fat1216.fsType, "FAT16", 5)){
+        fatDisk->fstype = FS_FAT16;
     }else{
-        fatDisk->type = FS_FAT32;
+        fatDisk->fstype = FS_UNSUPPORTED;
     }
 
     dealloc(bpb);

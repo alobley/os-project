@@ -18,58 +18,29 @@ extern void LittleGame();
 extern void reboot();
 extern void shutdown();
 extern disk_t* disks[MAX_DRIVES];
+extern fat_disk_t* fatdisks[MAX_DRIVES];
 
 // Execute a syscall to see what happens
 void syscall(){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
 }
 
-/* This works flawlessly:
-void FindBootsect(){
-    bpb_t* bpb;
-    for(int disk = 0; disk < MAX_DRIVES; disk++){
-        if(disks[disk]->type == PATADISK){
-            if(disks[disk]->addressing == LBA48){
-                bpb = ReadSectors(disks[disk], 1, 1);
+
+void GetFilesystem(){
+    for(int i = 0; i < MAX_DRIVES; i++){
+        if(fatdisks[i] != NULL){
+            if(fatdisks[i]->fstype == FS_UNSUPPORTED){
+                printk("Non-FAT disk!\n");
+            }else if(fatdisks[i]->fstype == FS_FAT12){
+                printk("FAT12 disk found!\n");
+            }else if(fatdisks[i]->fstype == FS_FAT16){
+                printk("FAT16 disk found!\n");
+            }else if(fatdisks[i]->fstype == FS_FAT32){
+                printk("FAT32 disk found!\n");
             }else{
-                bpb = ReadSectors(disks[disk], 1, 0);
+                printk("exFAT disk found!\n");
             }
         }
-    }
-
-    if(bpb == NULL){
-        printk("Couldn't find a compatible disk!\n");
-    }else{
-        if (bpb->ebr.ebr_type.fat32.bootSig == 0xAA55) {
-            printk("Bootsector located! Signature: 0x%x\n", bpb->ebr.ebr_type.fat32.bootSig);
-        } else if (bpb->ebr.ebr_type.fat1216.bootSig == 0xAA55) {
-            printk("Bootsector located! Signature: 0x%x\n", bpb->ebr.ebr_type.fat1216.bootSig);
-        }else{
-            printk("No bootsector on this disk!\n");
-        }
-    }
-}
-*/
-
-// But this does not:
-void FindBootsect(){
-    fat_disk_t* fatdisk;
-    for(int disk = 0; disk < MAX_DRIVES; disk++){
-        if(fatdisk->parent->type == PATADISK){
-            fatdisk = ParseFilesystem(disks[disk]);
-        }
-    }
-
-    if(fatdisk->type == FS_UNSUPPORTED){
-        printk("Non-FAT disk!\n");
-    }else if(fatdisk->type == FS_FAT12){
-        printk("FAT12 disk found!\n");
-    }else if(fatdisk->type == FS_FAT16){
-        printk("FAT16 disk found!\n");
-    }else if(fatdisk->type == FS_FAT32){
-        printk("FAT32 disk found!\n");
-    }else{
-        printk("exFAT disk found!\n");
     }
 }
 
@@ -150,7 +121,7 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         printk("Total memory: %u MB\n", (multibootInfo->memLower + multibootInfo->memUpper + 1024) / 1024);
 
     }else if (strcmp(cmd, "readtest")){
-        FindBootsect();
+        GetFilesystem();
 
     }else{
         printk("Invalid Command!\n");

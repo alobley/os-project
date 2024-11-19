@@ -43,6 +43,9 @@ void shutdown(){
 // An array of pointers to all the ATA disks
 disk_t* disks[MAX_DRIVES];
 
+// An array of pointers to all possible FAT disks
+fat_disk_t* fatdisks[MAX_DRIVES];
+
 // Initializes all the required components
 void InitializeHardware(){
     InitIDT();
@@ -53,6 +56,11 @@ void InitializeHardware(){
     InitializeKeyboard();
     for(int disk = 0; disk < MAX_DRIVES; disk++){
         disks[disk] = IdentifyDisk(disk);
+    }
+
+    for(int i = 0; i < MAX_DRIVES; i++){
+        fatdisks[i] = ParseFilesystem(disks[i]);
+        fat_disk_t* fatdisk = fatdisks[i];
     }
 }
 

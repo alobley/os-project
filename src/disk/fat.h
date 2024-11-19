@@ -102,7 +102,7 @@ typedef struct PACKED exFAT_Boot_Record {
 
 typedef struct FAT_Disk {
     disk_t* parent;         // The ATA disk with a FAT filesystem
-    uint8 type;             // The filesystem type
+    uint8 fstype;           // The filesystem type
     uint32 firstFatSector;  // The first FAT sector
     uint32 fatSize;         // The FAT size in sectors
     uint32 volumeSectors;   // Total sectors in this volume

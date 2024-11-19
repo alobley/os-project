@@ -72,7 +72,7 @@
 #define FLG_DRQ (1 << 3)                        // Data request. When the drive is ready for PIO data transfer in or out
 #define FLG_SRV (1 << 4)                        // Overlapped mode service request
 #define FLG_DF (1 << 5)                         // Drive fault error (does not set the ERR flag)
-#define FLG_RDY (1 << 6)                        // Defice is ready
+#define FLG_RDY (1 << 6)                        // Device is ready
 #define FLG_BSY (1 << 7)                        // Device is busy. If it doesn't clear, a software reset is a good idea
 
 
@@ -127,7 +127,7 @@ void WaitForIdle(uint16 basePort){
 }
 
 void WaitForDrq(uint16 basePort){
-    while(inb(StatusPort(basePort)) & FLG_DRQ != FLG_DRQ);
+    while(inb((StatusPort(basePort)) & FLG_DRQ));
 }
 #pragma GCC pop_options
 
@@ -439,11 +439,6 @@ uint16* ReadSectors(disk_t* disk, uint16 sectorsToRead /*For LBA28 only the low 
         outb(LbaHi(disk->base), ((uint8)(lba >> 16) & 0xFF));
 
         WaitForIdle(disk->base);
-        outb(CmdPort(disk->base), COMMAND_READ_SECTORS);
-        for(int i = 0; i < 4; i++){
-            inb(ErrorPort(disk->base));
-        }
-        WaitForDrq(disk->base);
 
         for(int sector = 0; sector < sectorsToRead; sector++){
             WaitForIdle(disk->base);
@@ -451,6 +446,10 @@ uint16* ReadSectors(disk_t* disk, uint16 sectorsToRead /*For LBA28 only the low 
             for(int i = 0; i < 4; i++){
                 inb(ErrorPort(disk->base));
             }
+            if(inb(ErrorPort(disk->base)) != 0){
+                return NULL;
+            }
+            
             for(int i = 0; i < 256; i++){
                 // Read the sector
                 buffer[sector * 256 + i] = inw(DataPort(disk->base));
