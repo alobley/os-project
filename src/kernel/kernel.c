@@ -46,14 +46,7 @@ disk_t* disks[MAX_DRIVES];
 // An array of pointers to all possible FAT disks
 fat_disk_t* fatdisks[MAX_DRIVES];
 
-// Initializes all the required components
-void InitializeHardware(){
-    InitIDT();
-    InitISR();
-    InitializeFPU();
-    InitIRQ();
-    InitializePIT();
-    InitializeKeyboard();
+void InitializeDisks(){
     for(int disk = 0; disk < MAX_DRIVES; disk++){
         disks[disk] = IdentifyDisk(disk);
     }
@@ -62,6 +55,17 @@ void InitializeHardware(){
         fatdisks[i] = ParseFilesystem(disks[i]);
         fat_disk_t* fatdisk = fatdisks[i];
     }
+}
+
+// Initializes all the required components
+void InitializeHardware(){
+    InitIDT();
+    InitISR();
+    InitializeFPU();
+    InitIRQ();
+    InitializePIT();
+    InitializeKeyboard();
+    InitializeDisks();
 }
 
 // The kernel's main function

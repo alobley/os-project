@@ -33,7 +33,7 @@ typedef struct PACKED Extended_Boot_Record {
             uint32 sectorsPerFat;
             uint16 flags;
             uint16 version;             // High byte = major version, low byte = minor version
-            uint32 rootDirCluster;
+            uint32 rootDirCluster;      // First LBA of the root cluster
             uint16 fsInfo;              // Sector number on the disk containing the fsinfo structure
             uint16 backupBoot;          // Sector number for the backup boot sector
             uint8 _reserved[12];
@@ -42,7 +42,7 @@ typedef struct PACKED Extended_Boot_Record {
             uint8 signature;            // Must be 0x28 or 0x29
             uint32 serialNum;
             char volumeLabel[11];
-            char systemID[8];           // System identifier, always "FAT32   ". Don't trust this.
+            char systemID[8];           // System identifier, always "FAT32   ".
             uint8 bootCode[420];
             uint16 bootSig;
         } fat32;
@@ -64,7 +64,7 @@ typedef struct PACKED BIOS_Parameter_Block {
     uint16 numHeads;
     uint32 hiddenSectors;       // LBA of the beginning of the partition
     uint32 largeSectorCount;
-    ebr_t ebr;                 // Extended Boot Record
+    ebr_t ebr;                  // Extended Boot Record
 } bpb_t;
 
 typedef struct PACKED Filesystem_Info {
@@ -103,13 +103,14 @@ typedef struct PACKED exFAT_Boot_Record {
 typedef struct FAT_Disk {
     disk_t* parent;         // The ATA disk with a FAT filesystem
     uint8 fstype;           // The filesystem type
-    uint32 firstFatSector;  // The first FAT sector
-    uint32 fatSize;         // The FAT size in sectors
-    uint32 volumeSectors;   // Total sectors in this volume
-    uint32 rootSectors;     // Size of the root directory in sectors
-    uint32 firstDataSector; // First sector where data (i.e. files) can be stored
-    uint32 dataSectors;     // The total number of data sectors on the disk
-    uint32 totalClusters;   // The total amount of clusters in the filesystem
+    uint64 firstFatSector;  // The first FAT sector
+    uint64 fatSize;         // The FAT size in sectors
+    uint64 volumeSectors;   // Total sectors in this volume
+    uint64 rootSectors;     // Size of the root directory in sectors
+    uint64 firstDataSector; // First sector where data (i.e. files) can be stored
+    uint64 dataSectors;     // The total number of data sectors on the disk
+    uint64 totalClusters;   // The total amount of clusters in the filesystem
+    bpb_t* paramBlock;      // In case anything was forgotten
 } fat_disk_t;
 
 
@@ -121,23 +122,8 @@ typedef struct FAT_Disk {
 #define ATTR_DIRECTORY 0x10
 #define ATTR_ARCHIVE 0x20
 #define ATTR_LFN (ATTR_READONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_VOLUME_ID)       // Long file entry
+#define DELETED 0xE5
 
-// &name[1] - sizeof(lfn_entry_t) = LFN entry
-// Files and directories count as the same thing, attributes tell them apart
-typedef struct PACKED FAT_File {
-    char name[11];
-    uint8 attributes;
-    uint8 _reserved;
-    uint8 creationSec;              // Creation time in hundredths of a second
-    uint16 creationTime;
-    uint16 creationDate;
-    uint16 lastAccessedDate;
-    uint16 firstClusterHigh;        // The high 16 bits of the entry's first cluster number
-    uint16 lastModifiedTime;
-    uint16 lastModifiedDate;
-    uint16 firstClusterLow;         // The low 16 bits of the entry's first cluster number
-    uint32 fileSize;                // Size of the file in bytes
-} fat_file_t;
 
 typedef struct PACKED LFN_Entry {
     uint8 orderSequence;            // ????????????????????????????????????????????
@@ -150,7 +136,25 @@ typedef struct PACKED LFN_Entry {
     short finalTwo[2];              // The last two characters of this entry
 } lfn_entry_t;
 
+// &name[1] - sizeof(lfn_entry_t) = LFN entry
+// Files and directories count as the same thing, attributes tell them apart
+typedef struct PACKED FAT_File {
+    //lfn_entry_t lfnEntry;
+    char name[11];
+    uint8 attributes;               // Attributes of the file
+    uint8 _reserved;
+    uint8 creationSec;              // Creation time in hundredths of a second
+    uint16 creationTime;
+    uint16 creationDate;
+    uint16 lastAccessedDate;
+    uint16 firstClusterHigh;        // The high 16 bits of the entry's first cluster number
+    uint16 lastModifiedTime;
+    uint16 lastModifiedDate;
+    uint16 firstClusterLow;         // The low 16 bits of the entry's first cluster number
+    uint32 fileSize;                // Size of the file in bytes
+} fat_entry_t;
 
+// exFAT isn't implemented entirely, but the datastructure exists for now. Unsure if full implementation will be done.
 typedef struct PACKED exFAT_file {
     uint8 type;
     uint8 numSecondaries;           // The number of secondary entries
@@ -185,5 +189,6 @@ typedef struct PACKED exFAT_file {
 
 
 fat_disk_t* ParseFilesystem(disk_t* disk);
+fat_entry_t* SeekFile(fat_disk_t* fatdisk, char* fileName);
 
 #endif

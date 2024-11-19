@@ -127,10 +127,10 @@ void reverse(char* str, int length){
     }
 }
 
-char* ConvertSigned(int32 number){
+char* ConvertSigned(int64 number){
     // Allocate the maximum digit size (including negative sign and null terminator)
-    char* buffer = (char* )alloc(11);
-    memset(buffer, 0, 11);
+    char* buffer = (char* )alloc(22);
+    memset(buffer, 0, 22);
     int i = 0;
     bool isNegative = false;
 
@@ -162,10 +162,10 @@ char* ConvertSigned(int32 number){
     return buffer;
 }
 
-char* ConvertUnSigned(uint32 number, uint8 base){
+char* ConvertUnSigned(uint64 number, uint8 base){
     // Allocate the maximum digit size (including negative sign and null terminator)
-    char* buffer = (char* )alloc(11);
-    memset(buffer, 0, 11);
+    char* buffer = (char* )alloc(22);
+    memset(buffer, 0, 22);
     int i = 0;
 
     if(number == 0){

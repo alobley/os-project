@@ -53,4 +53,12 @@ static inline bool strncmp(const char* in1, const char* in2, int term){
     return true;
 }
 
+static inline char toupper(char c){
+    if(c >= 'a' && c <= 'z'){
+        return c - ('a' - 'A');
+    }
+
+    return c;
+}
+
 #endif

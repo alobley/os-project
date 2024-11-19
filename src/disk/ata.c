@@ -459,11 +459,6 @@ uint16* ReadSectors(disk_t* disk, uint16 sectorsToRead /*For LBA28 only the low 
         // This is technically twice as long as it needs to be
         DiskDelay(disk->base);
     }else if(disk->addressing == LBA48){
-        if(sectorsToRead == 0){
-            // Very, very large amount of data
-            dealloc(buffer);
-            buffer = alloc(65536);
-        }
         WaitForIdle(disk->base);
 
         // Send the high bytes

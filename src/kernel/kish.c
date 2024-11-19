@@ -25,10 +25,13 @@ void syscall(){
     asm volatile("int %0" :: "Nd" (SYSCALL_INT));
 }
 
+fat_disk_t* supportedDisk;
 
-void GetFilesystem(){
+
+void fseek(){
     for(int i = 0; i < MAX_DRIVES; i++){
         if(fatdisks[i] != NULL){
+            printk("Disk %d: ", i);
             if(fatdisks[i]->fstype == FS_UNSUPPORTED){
                 printk("Non-FAT disk!\n");
             }else if(fatdisks[i]->fstype == FS_FAT12){
@@ -37,10 +40,19 @@ void GetFilesystem(){
                 printk("FAT16 disk found!\n");
             }else if(fatdisks[i]->fstype == FS_FAT32){
                 printk("FAT32 disk found!\n");
+                supportedDisk = fatdisks[i];
             }else{
                 printk("exFAT disk found!\n");
             }
         }
+    }
+
+    fat_entry_t* file = SeekFile(supportedDisk, "prgm.bin");
+    if(file == NULL){
+        printk("File not found!\n");
+    }else{
+        WriteStrSize(file->name, 11);
+        printk("\n");
     }
 }
 
@@ -75,7 +87,7 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
         printk("help: view this screen\n");
         printk("dskchk: scans the system for PATA disks\n");
         printk("memsize: get the total system RAM in bytes\n");
-        printk("readtest: tests the disk driver by locating the boot signature of a PATA disk\n");
+        printk("fseek: tests the FAT driver by looking for a file on the disk\n");
         printk("clear: clears the terminal screen\n");
         printk("fault: intentionally cause an exception (debug)\n");
         printk("reboot: reboots the machine\n");
@@ -92,7 +104,7 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
                     printk("Disk size in sectors: %u\n", disk->size);
                 }else if(disk->type == PATAPIDISK){
                     printk("(PATAPI)\n");
-                        if(disk->populated){
+                    if(disk->populated){
                         printk("Populated: YES\n");
                         printk("Disk size in sectors: %u\n", disk->size);
                     }else if(!disk->populated){
@@ -120,8 +132,8 @@ void ProcessCommand(const char* cmd, mboot_info_t* multibootInfo){
     }else if(strcmp(cmd, "memsize")){
         printk("Total memory: %u MB\n", (multibootInfo->memLower + multibootInfo->memUpper + 1024) / 1024);
 
-    }else if (strcmp(cmd, "readtest")){
-        GetFilesystem();
+    }else if (strcmp(cmd, "fseek")){
+        fseek();
 
     }else{
         printk("Invalid Command!\n");
