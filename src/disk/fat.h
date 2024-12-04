@@ -125,21 +125,10 @@ typedef struct FAT_Disk {
 #define DELETED 0xE5
 
 
-typedef struct PACKED LFN_Entry {
-    uint8 orderSequence;            // ????????????????????????????????????????????
-    short firstFive[5];             // The first five two-byte characters in this entry
-    uint8 attribute;                // Always 0x0F
-    uint8 type;                     // Long entry type. Zero if name.
-    uint8 checksum;
-    short midSix[6];                // The next 6 two-byte characters in this entry
-    uint16 alwaysZero;
-    short finalTwo[2];              // The last two characters of this entry
-} lfn_entry_t;
-
 // &name[1] - sizeof(lfn_entry_t) = LFN entry
 // Files and directories count as the same thing, attributes tell them apart
 typedef struct PACKED FAT_File {
-    //lfn_entry_t lfnEntry;
+    //lfn_entry_t* lfnEntry;
     char name[11];
     uint8 attributes;               // Attributes of the file
     uint8 _reserved;
@@ -153,6 +142,18 @@ typedef struct PACKED FAT_File {
     uint16 firstClusterLow;         // The low 16 bits of the entry's first cluster number
     uint32 fileSize;                // Size of the file in bytes
 } fat_entry_t;
+
+typedef struct PACKED LFN_Entry {
+    uint8 orderSequence;            // ????????????????????????????????????????????
+    uint16 firstFive[5];             // The first five two-byte characters in this entry
+    uint8 attribute;                // Always 0x0F
+    uint8 type;                     // Long entry type. Zero if name.
+    uint8 checksum;
+    uint16 midSix[6];                // The next 6 two-byte characters in this entry
+    uint16 alwaysZero;
+    uint16 finalTwo[2];              // The last two characters of this entry
+    fat_entry_t file;
+} lfn_entry_t;
 
 // exFAT isn't implemented entirely, but the datastructure exists for now. Unsure if full implementation will be done.
 typedef struct PACKED exFAT_file {

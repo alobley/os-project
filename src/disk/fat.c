@@ -96,22 +96,25 @@ fat_entry_t* SeekFile(fat_disk_t* fatdisk, char* fileName){
     //WriteStrSize(&name[0], 11);
     //WriteStr("\n");
 
-    uint64 rootCluster;
+    //uint64 rootCluster;
     uint64 rootSector;
     if(fatdisk->fstype == FS_FAT32 || fatdisk->fstype == FS_EXFAT){
         // FAT32 root directory cluster
-        rootCluster = fatdisk->paramBlock->ebr.ebr_type.fat32.rootDirCluster;
+        uint64 rootCluster = fatdisk->paramBlock->ebr.ebr_type.fat32.rootDirCluster;
         rootSector = fatdisk->firstDataSector + (rootCluster - 2) * fatdisk->paramBlock->sectorsPerCluster;
+        //printk("%d\n", fatdisk->paramBlock->sectorsPerCluster);
     }else{
         // FAT12/16 root directory handling
-        uint64 rootDirSectors = ((fatdisk->paramBlock->rootDirEntries * sizeof(fat_entry_t)) + (fatdisk->paramBlock->bytesPerSector - 1)) / fatdisk->paramBlock->bytesPerSector;
-        rootSector = fatdisk->firstFatSector + (fatdisk->paramBlock->numFATs * fatdisk->paramBlock->sectorsPerFAT);
-        rootCluster = rootSector; // For FAT12/16, treat the root directory as a "cluster"
+        rootSector = fatdisk->firstDataSector - fatdisk->rootSectors;
     }
 
-    //uint64 rootSector = fatdisk->firstDataSector + (rootCluster - 2) * fatdisk->paramBlock->sectorsPerCluster;
+    if(rootSector == 0){
+        return NULL;
+    }
 
-    uint16* buffer = ReadSectors(fatdisk->parent, fatdisk->paramBlock->sectorsPerCluster, rootSector);
+    printk("%d\n", rootSector);
+
+    void* buffer = ReadSectors(fatdisk->parent, fatdisk->paramBlock->sectorsPerCluster, rootSector);
     if(buffer == NULL){
         return NULL;
     }
@@ -123,26 +126,51 @@ fat_entry_t* SeekFile(fat_disk_t* fatdisk, char* fileName){
     fat_entry_t* entry = alloc(sizeof(fat_entry_t));
     memset(entry, 0, sizeof(fat_entry_t));
 
+    uint64 offset = 0;
     for(size_t i = 0; i < numEntries; i++){
-        fat_entry_t* file = (fat_entry_t* )((uint8*)buffer + i * sizeof(fat_entry_t));
-        WriteStrSize(file->name, 11);
-        for(int j = 0; j < sizeof(fat_entry_t); j++){
-            printk("0x%x ", *((unsigned char*)(file + j)));
-        }
-        if(file->name[0] == DELETED){
-            continue;
-        }
-        if(file->attributes == 0){
+        fat_entry_t* file = (fat_entry_t* )(buffer + offset);
+        if(file->name[0] == 0){
             // End of directory entries
             printk("End of entries!\n");
             break;
         }
-        if(file->name[0] != 0){
+        if(file->name[0] == DELETED){
+            continue;
+            offset += sizeof(lfn_entry_t);
+        }
+        if(file->name[11] == 0x0F){
+            lfn_entry_t* lfn = (lfn_entry_t*)((void*)file);
+            file = &lfn->file;
+            if(file->name[0] == 0){
+                // End of directory entries
+                //break;
+            }
+            if(file->name[0] == DELETED){
+                //printk("Deleted!\n");
+                continue;
+            }
+            WriteStrSize(lfn->file.name, 11);
+            printk("\n");
+            for(int j = 0; j < sizeof(fat_entry_t); j++){
+                printk("0x%x ", *((unsigned char*)(file + j)));
+            }
+            printk("\n");
+            offset += sizeof(lfn_entry_t);
+        }else{
+            WriteStrSize(file->name, 11);
+            printk("\n");
+            for(int j = 0; j < sizeof(fat_entry_t); j++){
+                printk("0x%x ", *((unsigned char*)(file + j)));
+            }
+            printk("\n");
+            offset += sizeof(fat_entry_t);
+        }
+        /*if(file->name[0] != 0){
             if(strncmp(file->name, &name[0], 11)){
                 memcpy(entry, file, sizeof(fat_entry_t));
                 break;
             }
-        }
+        }*/
     }
 
     if(entry->fileSize == 0){

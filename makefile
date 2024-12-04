@@ -38,7 +38,7 @@ LIBS=$(BUILD_DIR)/kernel_start.o $(INT_DIR)/isr.c $(INT_DIR)/idt.c $(INT_DIR)/ir
 LIBS+=$(LIB_DIR)/io.c $(LIB_DIR)/fpu.c $(VGA_DIR)/vga.c $(VGA_DIR)/pixel.c
 LIBS+=$(MEM_DIR)/alloc.c $(TIME_DIR)/time.c $(KB_DIR)/keyboard.c $(LIB_DIR)/math.c
 LIBS+=$(DISK_DIR)/ata.c $(DISK_DIR)/fat.c $(SOUND_DIR)/pcspkr.c $(VGA_DIR)/text.c
-LIBS+=$(KERNEL_DIR)/smallgame.c $(KERNEL_DIR)/kish.c -lgcc
+LIBS+=$(KERNEL_DIR)/smallgame.c $(KERNEL_DIR)/kish.c
 
 # Assembly and Kernel Files
 ASMFILE=boot
@@ -76,7 +76,7 @@ qemu: create_dirs $(BUILD_DIR)/main.iso
 # Add Files to Virtual Disk
 addfiles: create_dirs
 	sudo mount -o loop,rw bin/harddisk.vdi mnt
-	sudo cp $(BUILD_DIR)/prgm.bin mnt/PRGM.BIN
+	sudo cp $(BUILD_DIR)/prgm.bin mnt/PROGRAM.BIN
 	sudo umount mnt
 	sync
 

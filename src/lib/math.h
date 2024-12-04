@@ -9,11 +9,12 @@
 #define M_PI_4 (M_PI / 4)
 
 float64 sqrt(float64 x);
-float64 pow(float64 base, float64 exp);
 int abs(int x);
 void srand(int32 seed);
 int rand();
 int randrange(int min, int max);
-float64 pow(float64 base, float64 exp);
+double pow(double base, double exp);
+uint64 __udivdi3(uint64 dividend, uint64 divisor);
+uint64 __udivmoddi4(uint64 dividend, uint64 divisor, uint64* rem);
 
 #endif
